@@ -1,0 +1,7 @@
+[submodule "lib/shinxbot2-api"]
+	path = lib/shinxbot2-api
+	url = https://github.com/Jayfeather233/shinxbot2-api
+
+[submodule "lib/cpp-httplib"]
+	path = lib/cpp-httplib
+	url = https://github.com/yhirose/cpp-httplib
