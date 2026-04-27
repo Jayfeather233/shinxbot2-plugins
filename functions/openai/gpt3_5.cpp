@@ -55,6 +55,7 @@ gpt3_5::gpt3_5()
               "helpful assistant.\"}],"
               "\"black_list\": [\"股票\"],"
               "\"compress_summary_prompt\": \"\","
+              "\"compress_recent_rounds\": 10,"
               "\"MAX_TOKEN\": 4000,"
               "\"MAX_REPLY\": 700,"
               "\"RED_LINE\": 1000"
@@ -91,6 +92,8 @@ gpt3_5::gpt3_5()
     base_url = res.get("base_url", "https://api.openai.com").asString();
     model_name = res.get("model", "gpt-3.5-turbo").asString();
     compress_summary_prompt = res["compress_summary_prompt"].asString();
+    compress_recent_rounds = res.get("compress_recent_rounds", 10).asInt();
+    if (compress_recent_rounds < 1) compress_recent_rounds = 1;
 
     is_open = true;
     is_debug = false;
@@ -129,6 +132,7 @@ void gpt3_5::save_file()
         J["mode"].append(u);
     J["black_list"] = parse_set_to_json(black_list);
     J["compress_summary_prompt"] = compress_summary_prompt;
+    J["compress_recent_rounds"] = compress_recent_rounds;
     J["MAX_TOKEN"] = MAX_TOKEN;
     J["MAX_REPLY"] = MAX_REPLY;
     J["RED_LINE"] = RED_LINE;
@@ -276,13 +280,14 @@ bool gpt3_5::compress_history(int64_t id, size_t keyid, const msg_meta &conf,
     }
 
     Json::ArrayIndex total_sz = old_history.size();
-    Json::ArrayIndex recent_keep = static_cast<Json::ArrayIndex>(COMPRESS_RECENT_MESSAGES);
+    Json::ArrayIndex recent_keep = static_cast<Json::ArrayIndex>(compress_recent_rounds * 2);
     if (total_sz <= recent_keep) {
         if (error_message) *error_message = "history too short to compress.";
         return false;
     }
 
     Json::ArrayIndex split_idx = total_sz - recent_keep;
+
     Json::Value older_history(Json::arrayValue);
     Json::Value recent_history(Json::arrayValue);
     for (Json::ArrayIndex i = 0; i < split_idx; ++i) {
@@ -600,10 +605,6 @@ void gpt3_5::process(std::string message, const msg_meta &conf)
         }
     }
 
-    // Auto-archive check
-    perform_archive(id, conf, true);
-
-
     const std::vector<cmd_exact_rule> exact_rules = {
         {".test",
          [&]() {
@@ -762,6 +763,14 @@ void gpt3_5::process(std::string message, const msg_meta &conf)
                         RED_LINE = num;
                         reply = "set RED_LINE to " + std::to_string(num);
                         do_save = true;
+                    } else if (type == "compress") {
+                        if (num < 1) {
+                            reply = "compress rounds must be >= 1";
+                        } else {
+                            compress_recent_rounds = static_cast<int>(num);
+                            reply = "set compress_recent_rounds to " + std::to_string(num);
+                            do_save = true;
+                        }
                     } else {
                         reply = "Unknown type";
                     }
@@ -786,6 +795,8 @@ void gpt3_5::process(std::string message, const msg_meta &conf)
                 reply += "MAX_TOKEN: " + std::to_string(MAX_TOKEN) + "\n";
                 reply += "MAX_REPLY: " + std::to_string(MAX_REPLY) + "\n";
                 reply += "RED_LINE: " + std::to_string(RED_LINE) + "\n";
+                reply += "compress keep rounds: " + std::to_string(compress_recent_rounds) + "\n";
+                reply += "compress keep messages: " + std::to_string(compress_recent_rounds * 2) + "\n";
                 reply += "compress threshold (MAX_TOKEN-RED_LINE): " +
                          std::to_string(compress_threshold) + "\n";
                 reply += "trim threshold (MAX_TOKEN-MAX_REPLY): " +
@@ -1042,7 +1053,7 @@ std::string gpt3_5::help()
            ".ai.arc list [页码] - 查看归档列表（每页5条）\n"
            ".ai.arc restore [编号/文件名] - 从归档中恢复上下文\n"
            ".ai.sw - 仅 OP 可用, 关闭模型作维护用\n"
-           ".ai.set reply/token/red [数值] - 修改 MAX_REPLY/MAX_TOKEN/RED_LINE\n"
+           ".ai.set reply/token/red/compress [数值] - 修改 MAX_REPLY/MAX_TOKEN/RED_LINE/compress_recent_rounds\n"
            "权限说明：归档与恢复功能在群聊中需 OP权限，私聊可直接使用。";
 }
 
@@ -1083,7 +1094,7 @@ void gpt3_5::perform_archive(int64_t id, const msg_meta &conf, bool is_auto,
     tm tm_res = *std::gmtime(&now);
     char time_buf[64];
     if (is_auto) {
-        std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%d_auto", &tm_res);
+        std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%d_%H-%M-%S_beforeCompress", &tm_res);
     } else {
         std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%d_%H-%M-%S", &tm_res);
     }
@@ -1091,7 +1102,14 @@ void gpt3_5::perform_archive(int64_t id, const msg_meta &conf, bool is_auto,
     std::string filename = std::string(time_buf) + ".json";
     std::string full_path = backup_dir + "/" + filename;
 
-    if (is_auto && fs::exists(full_path)) return;
+    if (is_auto && fs::exists(full_path)) {
+        int suffix = 1;
+        do {
+            filename = std::string(time_buf) + "_" + std::to_string(suffix) + ".json";
+            full_path = backup_dir + "/" + filename;
+            ++suffix;
+        } while (fs::exists(full_path));
+    }
 
     Json::Value J;
     {
