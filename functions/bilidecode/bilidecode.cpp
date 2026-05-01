@@ -43,16 +43,26 @@ void bili_decode::send_dec_info(const Json::Value &J, const msg_meta &conf)
                                   J["data"]["bvid"].asString());
 }
 
+bool bili_decode::update_group_decode(groupid_t gid, const std::string &code) {
+    auto now = std::chrono::steady_clock::now();
+    if (group_last_decode[gid].first == code) {
+        if (now - group_last_decode[gid].second < std::chrono::seconds(10)) {
+            return false;
+        }
+    }
+    group_last_decode[gid] = std::make_pair(code, now);
+    return true;
+}
+
 void bili_decode::process_string(std::string s, const msg_meta &conf)
 {
     do {
         bv_result res = get_bv(s);
         if (res.first.empty())
             break;
-        if (conf.group_id && group_last_decode[conf.group_id] == res.first) {
+        if (conf.group_id && !update_group_decode(conf.group_id, res.first)) {
             break;
         }
-        group_last_decode[conf.group_id] = res.first;
         Json::Value raw_info = get_raw_info(res.first);
         if (raw_info["code"].asInt64() == 0) {
             send_dec_info(raw_info, conf);
@@ -63,10 +73,9 @@ void bili_decode::process_string(std::string s, const msg_meta &conf)
         av_result res = get_av(s);
         if (res.first == 0)
             break;
-        if (conf.group_id && group_last_decode[conf.group_id] == std::to_string(res.first)) {
+        if (conf.group_id && !update_group_decode(conf.group_id, std::to_string(res.first))) {
             break;
         }
-        group_last_decode[conf.group_id] = std::to_string(res.first);
         Json::Value raw_info = get_raw_info(res.first);
         if (raw_info["code"].asInt64() == 0) {
             send_dec_info(raw_info, conf);
