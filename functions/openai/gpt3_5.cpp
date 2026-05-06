@@ -869,9 +869,7 @@ void gpt3_5::process(std::string message, const msg_meta &conf)
             if (!compressed) {
                 break;
             }
-            if (last_prompt_tokens[id] > 0) {
-                break;
-            }
+            break;
         }
         while (((last_prompt_tokens[id] > 0 &&
                  last_prompt_tokens[id] > (int64_t)(MAX_TOKEN - MAX_REPLY)) ||
@@ -880,9 +878,7 @@ void gpt3_5::process(std::string message, const msg_meta &conf)
             if (h.size() <= 2) break;
             if (h.size() > 0) h.removeIndex(0, &ign);
             if (h.size() > 0) h.removeIndex(0, &ign);
-            if (last_prompt_tokens[id] > 0) {
-                break;
-            }
+            break;
         }
 
         Json::Value K = mode_prompt[pre_default[id]];
