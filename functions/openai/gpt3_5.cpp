@@ -370,9 +370,9 @@ bool gpt3_5::compress_history(int64_t id, size_t keyid, const msg_meta &conf,
         std::lock_guard<std::recursive_mutex> lock(data_lock);
         history[id] = new_history;
         last_prompt_tokens[id] = 0;
-        if (pre_default.find(id) == pre_default.end()) {
-            pre_default[id] = current_mode.empty() ? default_prompt : current_mode;
-        }
+        pre_default.try_emplace(id,
+                                current_mode.empty() ? default_prompt
+                                                     : current_mode);
     }
     return true;
 }

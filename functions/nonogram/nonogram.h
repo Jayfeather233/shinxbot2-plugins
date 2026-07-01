@@ -17,9 +17,8 @@ class nonogram_level {
 public:
     nonogram_level(const std::vector<std::vector<bool>> &d,
                    const std::string &p)
+        : data(d), pic(p)
     {
-        data = d;
-        pic = p;
         int rows = data.size();
         int cols = data[0].size();
         row_clues.resize(rows);

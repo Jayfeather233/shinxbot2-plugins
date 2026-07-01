@@ -272,7 +272,7 @@ int guessmap::get_start_crop(const std::string &message) const
         std::string mode = body;
         size_t split = mode.find_first_of(" \t");
         if (split != std::string::npos) {
-            mode = mode.substr(0, split);
+            mode.erase(split); // truncate in place (split is valid here)
         }
         std::transform(
             mode.begin(), mode.end(), mode.begin(),

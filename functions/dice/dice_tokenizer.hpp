@@ -365,7 +365,9 @@ namespace dice_tokenizer {
             if (op == OpType::D_UNARY) {
                 if (right->op != OpType::NUMBER) {
                     bool ret = right->doDice(mode);
-                    if (right && (right->op != OpType::NUMBER && getPreority(right->op) < getPreority(op) || getPreority(right->op) == getPreority(OpType::D_BINARY))) {
+                    // right is already dereferenced above, so the null-check is
+                    // redundant (cppcheck nullPointerRedundantCheck).
+                    if (right->op != OpType::NUMBER && getPreority(right->op) < getPreority(op) || getPreority(right->op) == getPreority(OpType::D_BINARY)) {
                         renderedStr = "d(" + right->renderedStr + ")";
                     } else {
                         renderedStr = "d" + right->renderedStr;

@@ -11,12 +11,8 @@ typedef struct Player {
     std::string word;
     bool alive;
     Player(userid_t user_id)
+        : id(user_id), pre_id(0), nex_id(0), word(), alive(true)
     {
-        id = user_id;
-        pre_id = 0;
-        nex_id = 0;
-        word = "";
-        alive = true;
     }
 } player_t;
 

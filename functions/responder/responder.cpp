@@ -194,7 +194,9 @@ void Responder::process(std::string message, const msg_meta &conf)
             message = trim(message);
             size_t space_pos = message.find(' ');
             groupid = my_string2uint64(message.substr(space_pos + 1));
-            message = message.substr(0, space_pos);
+            if (space_pos != std::string::npos) {
+                message.erase(space_pos); // truncate in place (npos-safe)
+            }
         }
         catch (...) {
             return;
