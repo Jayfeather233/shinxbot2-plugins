@@ -1,8 +1,7 @@
 #include "poke.h"
 #include "utils.h"
 
-poke::poke()
-{
+poke::poke() {
     Json::Value J = string_to_json(
         readfile(bot_config_path(nullptr, "features/poke/poke.json"),
                  "{\"users\": [], \"groups\": []}"));
@@ -11,8 +10,7 @@ poke::poke()
     minInterval = std::chrono::seconds(3);
 }
 
-void poke::process(bot *p, Json::Value J)
-{
+void poke::process(bot *p, Json::Value J) {
     std::unique_lock<std::mutex> lock(mutex_);
 
     auto now = std::chrono::steady_clock::now();
@@ -33,8 +31,7 @@ void poke::process(bot *p, Json::Value J)
     p->cq_send("group_poke", Jx);
     p->cq_send("给你一拳", (msg_meta){"group", 0, J["group_id"].asUInt64(), 0});
 }
-bool poke::check(bot *p, Json::Value J)
-{
+bool poke::check(bot *p, Json::Value J) {
     if (!J.isMember("group_id") || !J.isMember("sub_type") ||
         J["sub_type"].asString() != "poke")
         return false;

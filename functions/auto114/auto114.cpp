@@ -4,8 +4,7 @@
 #include <iostream>
 #include <sstream>
 
-auto114::auto114()
-{
+auto114::auto114() {
     len = 0;
     const std::string homodata_path =
         bot_resource_path(nullptr, "auto114/homodata.txt");
@@ -21,16 +20,14 @@ auto114::auto114()
                 len++;
         }
         afile.close();
-    }
-    else {
+    } else {
         set_global_log(LOG::ERROR, "Missing file: " + homodata_path);
     }
 }
 
 std::string __1 = "(11-4-5+1-4)*";
 
-int auto114::find_min(int64_t input)
-{
+int auto114::find_min(int64_t input) {
     for (int i = 0; i < len; i++) {
         if (ai[i].num <= input) {
             return i;
@@ -39,8 +36,7 @@ int auto114::find_min(int64_t input)
     return -1;
 }
 
-std::string auto114::getans(int64_t input)
-{
+std::string auto114::getans(int64_t input) {
     if (input == 1ll << 63) {
         return "No bigInt";
     }
@@ -53,20 +49,17 @@ std::string auto114::getans(int64_t input)
     }
     if (input == ai[pos].num) {
         return ai[pos].ans;
-    }
-    else {
+    } else {
         if (input / ai[pos].num == 1) {
             return ai[pos].ans + "+" + getans(input % ai[pos].num);
-        }
-        else {
+        } else {
             return "(" + getans(input / ai[pos].num) + ")*(" + ai[pos].ans +
                    ")+" + getans(input % ai[pos].num);
         }
     }
 }
 
-void auto114::process(std::string message, const msg_meta &conf)
-{
+void auto114::process(std::string message, const msg_meta &conf) {
     std::string body;
     if (cmd_strip_prefix(message, "*homo ", body)) {
         message = "homo " + body;
@@ -84,13 +77,11 @@ void auto114::process(std::string message, const msg_meta &conf)
                                   std::to_string(conf.user_id));
     if (input == 114514) {
         conf.p->cq_send("这么臭的数字有必要论证吗（恼）", conf);
-    }
-    else {
+    } else {
         conf.p->cq_send(std::to_string(input) + "=" + getans(input), conf);
     }
 }
-bool auto114::check(std::string message, const msg_meta &conf)
-{
+bool auto114::check(std::string message, const msg_meta &conf) {
     (void)conf;
     return cmd_match_prefix(message, {"*homo ", "homo "});
 }

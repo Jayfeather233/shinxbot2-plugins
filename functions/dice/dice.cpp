@@ -1,6 +1,6 @@
 #include "dice.h"
-#include "utils.h"
 #include "dice_tokenizer.hpp"
+#include "utils.h"
 
 void dice::process(std::string message, const msg_meta &conf) {
     message = trim(message);
@@ -26,24 +26,31 @@ void dice::process(std::string message, const msg_meta &conf) {
             ori += fmt::format(" = {}", tree->renderedStr);
         }
 
-        std::string reply = "[CQ:reply,id=" + std::to_string(conf.message_id) + "]" + ori;
+        std::string reply =
+            "[CQ:reply,id=" + std::to_string(conf.message_id) + "]" + ori;
         conf.p->cq_send(reply, conf);
-        conf.p->setlog(LOG::INFO,
-            "dice_module: user " + std::to_string(conf.user_id) + " rolled " + message);
+        conf.p->setlog(LOG::INFO, "dice_module: user " +
+                                      std::to_string(conf.user_id) +
+                                      " rolled " + message);
 
         delete tree;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         // conf.p->setlog(LOG::ERROR,
-        //     "dice_module: error processing message from user " + std::to_string(conf.user_id) + ": " + e.what());
+        //     "dice_module: error processing message from user " +
+        //     std::to_string(conf.user_id) + ": " + e.what());
     }
 }
 
 bool dice::check(std::string message, const msg_meta &conf) {
-    return message.find('d') != message.npos || message.find('D') != message.npos || (message.size() > 1 && message[0] == '.');
+    return message.find('d') != message.npos ||
+           message.find('D') != message.npos ||
+           (message.size() > 1 && message[0] == '.');
 }
 
 std::string dice::help() {
-    return "骰子投掷：输入如 d20、3d6、3d6+5、2d6+2d4+3、min(3d6)、max(2d6)、.2d6+2d4+3 的表达式进行投掷";
+    return "骰子投掷：输入如 "
+           "d20、3d6、3d6+5、2d6+2d4+3、min(3d6)、max(2d6)、.2d6+2d4+3 "
+           "的表达式进行投掷";
 }
 
 DECLARE_FACTORY_FUNCTIONS(dice)

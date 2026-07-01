@@ -2,8 +2,7 @@
 #include <fmt/core.h>
 #include <fmt/ranges.h>
 
-static std::string birthday_public_detail_help()
-{
+static std::string birthday_public_detail_help() {
     return "日期提醒帮助\n"
            "date.help\n"
            "date.add MMDD event\n"
@@ -11,20 +10,17 @@ static std::string birthday_public_detail_help()
            "date.send";
 }
 
-static std::string birthday_admin_detail_help()
-{
-    return birthday_public_detail_help() +
-           "\n"
-           "date.del event\n"
-           "date.inf.add days\n"
-           "date.inf.del days\n"
-           "date.inf.list";
+static std::string birthday_admin_detail_help() {
+    return birthday_public_detail_help() + "\n"
+                                           "date.del event\n"
+                                           "date.inf.add days\n"
+                                           "date.inf.del days\n"
+                                           "date.inf.list";
 }
 
 birthday::birthday() { load_config(); }
 
-void birthday::load_config()
-{
+void birthday::load_config() {
     birthdays.clear();
     inform_interval.clear();
 
@@ -36,8 +32,7 @@ void birthday::load_config()
             for (const auto &J : Ja[uid]) {
                 inform_interval.insert(J.asInt());
             }
-        }
-        else {
+        } else {
             for (const auto &J : Ja[uid]) {
                 birthdays[uuid].push_back((mmdd){
                     J["who"].asString(), J["mm"].asInt(), J["dd"].asInt()});
@@ -45,8 +40,7 @@ void birthday::load_config()
         }
     }
 }
-void birthday::save()
-{
+void birthday::save() {
     Json::Value Jaa(Json::objectValue);
     for (const auto &it : birthdays) {
         Json::Value Ja(Json::arrayValue);
@@ -68,8 +62,7 @@ void birthday::save()
 birthday.add mmdd who
 birthday.del who
 */
-void birthday::process(std::string message, const msg_meta &conf)
-{
+void birthday::process(std::string message, const msg_meta &conf) {
     std::unique_lock<std::mutex> lock(mutex_);
     std::istringstream iss(trim(message));
     std::string command;
@@ -102,8 +95,7 @@ void birthday::process(std::string message, const msg_meta &conf)
                      try {
                          u = (mmdd){who, std::stoi(date.substr(0, 2)),
                                     std::stoi(date.substr(2, 2))};
-                     }
-                     catch (...) {
+                     } catch (...) {
                          oss_output << fmt::format("{} 日期不是数字\n", date);
                          continue;
                      }
@@ -119,17 +111,14 @@ void birthday::process(std::string message, const msg_meta &conf)
                          oss_output
                              << fmt::format("加入 {} 的日期 {}\n", who, date);
                          save();
-                     }
-                     else {
+                     } else {
                          oss_output
                              << fmt::format("{} 不是一个有效日期！\n", date);
                      }
-                 }
-                 else if (!who.empty()) {
+                 } else if (!who.empty()) {
                      oss_output
                          << fmt::format("{} 请使用 MMDD 日期格式\n", date);
-                 }
-                 else {
+                 } else {
                      oss_output << fmt::format("{} 请输入事件描述\n", date);
                  }
              }
@@ -151,8 +140,7 @@ void birthday::process(std::string message, const msg_meta &conf)
                  bdays.erase(it, bdays.end());
                  conf.p->cq_send(fmt::format("删除了 {} 的日期", who), conf);
                  save();
-             }
-             else {
+             } else {
                  conf.p->cq_send(fmt::format("找不到 {} 的日期", who), conf);
              }
              return true;
@@ -217,29 +205,24 @@ void birthday::process(std::string message, const msg_meta &conf)
         conf.p->cq_send("未知命令，请使用 date.help 查看帮助", conf);
     }
 }
-bool birthday::check(std::string message, const msg_meta &conf)
-{
+bool birthday::check(std::string message, const msg_meta &conf) {
     return (cmd_match_prefix(message, {"date."}) &&
             conf.message_type == "group");
 }
 
-bool birthday::reload(const msg_meta &conf)
-{
+bool birthday::reload(const msg_meta &conf) {
     (void)conf;
     std::lock_guard<std::mutex> lock(mutex_);
     load_config();
     return true;
 }
 
-std::string birthday::help()
-{
+std::string birthday::help() {
     return "日期提醒：记录群事件并定期提醒。帮助：date.help";
 }
 
-std::string birthday::help(const msg_meta &conf, help_level_t level)
-{
-    if (conf.message_type == "group" &&
-        level == help_level_t::group_admin &&
+std::string birthday::help(const msg_meta &conf, help_level_t level) {
+    if (conf.message_type == "group" && level == help_level_t::group_admin &&
         is_group_op(conf.p, conf.group_id, conf.user_id)) {
         return "日期提醒（管理员可配置删除与提醒周期）。帮助：date.help";
     }
@@ -248,8 +231,7 @@ std::string birthday::help(const msg_meta &conf, help_level_t level)
 }
 
 void birthday::send_upcoming_msg(const std::tm &localTime, bot *p,
-                                 groupid_t group_idx)
-{
+                                 groupid_t group_idx) {
     for (const auto &[group_id, bdays] : birthdays) {
         if (group_idx != group_id && group_idx != 0)
             continue;
@@ -262,13 +244,11 @@ void birthday::send_upcoming_msg(const std::tm &localTime, bot *p,
         for (const auto &b : bdays) {
             if (b.mm == (localTime.tm_mon + 1) && b.dd == localTime.tm_mday) {
                 todayBirthdays += fmt::format("{}！\n", b.name);
-            }
-            else if (b.mm > localTime.tm_mon + 1 ||
-                     (b.mm == localTime.tm_mon + 1 &&
-                      b.dd > localTime.tm_mday)) {
+            } else if (b.mm > localTime.tm_mon + 1 ||
+                       (b.mm == localTime.tm_mon + 1 &&
+                        b.dd > localTime.tm_mday)) {
                 nearestBirthdays1.push_back(b);
-            }
-            else {
+            } else {
                 nearestBirthdays2.push_back(b);
             }
         }
@@ -315,8 +295,7 @@ void birthday::send_upcoming_msg(const std::tm &localTime, bot *p,
     }
 }
 
-void birthday::check_date(bot *p)
-{
+void birthday::check_date(bot *p) {
     auto nowtime = std::chrono::system_clock::now();
     std::time_t currentTime = std::chrono::system_clock::to_time_t(nowtime);
     std::tm localTime = *std::localtime(&currentTime);
@@ -328,14 +307,13 @@ void birthday::check_date(bot *p)
             return;
         send_upcoming_msg(localTime, p);
         has_sent = true;
-    }
-    else {
+    } else {
         has_sent = false;
     }
 }
 birthday::~birthday() {}
-void birthday::set_callback(std::function<void(std::function<void(bot *p)>)> f)
-{
+void birthday::set_callback(
+    std::function<void(std::function<void(bot *p)>)> f) {
     f([this](bot *p) { this->check_date(p); });
 }
 DECLARE_FACTORY_FUNCTIONS(birthday)

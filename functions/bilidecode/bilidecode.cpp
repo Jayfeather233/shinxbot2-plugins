@@ -6,8 +6,7 @@
 
 #include "bilidecode.h"
 
-av_result bili_decode::get_av(std::string s, size_t pos)
-{
+av_result bili_decode::get_av(std::string s, size_t pos) {
     pos = s.find("av", pos);
     if (pos == s.npos) {
         return std::make_pair(0, pos);
@@ -21,8 +20,7 @@ av_result bili_decode::get_av(std::string s, size_t pos)
     return std::make_pair(avid, pos);
 }
 
-bv_result bili_decode::get_bv(std::string s, size_t pos)
-{
+bv_result bili_decode::get_bv(std::string s, size_t pos) {
     pos = s.find("BV", pos);
     if (pos == s.npos) {
         return std::make_pair(std::string(), pos);
@@ -34,8 +32,7 @@ bv_result bili_decode::get_bv(std::string s, size_t pos)
     }
     return std::make_pair(bvid, pos);
 }
-void bili_decode::send_dec_info(const Json::Value &J, const msg_meta &conf)
-{
+void bili_decode::send_dec_info(const Json::Value &J, const msg_meta &conf) {
     conf.p->cq_send(get_decode_info(J), conf);
     conf.p->setlog(LOG::INFO, "bilidecoder: group " +
                                   std::to_string(conf.group_id) + " user " +
@@ -54,8 +51,7 @@ bool bili_decode::update_group_decode(groupid_t gid, const std::string &code) {
     return true;
 }
 
-void bili_decode::process_string(std::string s, const msg_meta &conf)
-{
+void bili_decode::process_string(std::string s, const msg_meta &conf) {
     do {
         bv_result res = get_bv(s);
         if (res.first.empty())
@@ -73,7 +69,8 @@ void bili_decode::process_string(std::string s, const msg_meta &conf)
         av_result res = get_av(s);
         if (res.first == 0)
             break;
-        if (conf.group_id && !update_group_decode(conf.group_id, std::to_string(res.first))) {
+        if (conf.group_id &&
+            !update_group_decode(conf.group_id, std::to_string(res.first))) {
             break;
         }
         Json::Value raw_info = get_raw_info(res.first);
@@ -84,8 +81,7 @@ void bili_decode::process_string(std::string s, const msg_meta &conf)
     } while (0);
 }
 
-void bili_decode::process(Json::Value messageArr, const msg_meta &conf)
-{
+void bili_decode::process(Json::Value messageArr, const msg_meta &conf) {
     Json::ArrayIndex sz = messageArr.size();
     for (Json::ArrayIndex i = 0; i < sz; ++i) {
         if (messageArr[i]["type"] == "text") {
@@ -94,13 +90,11 @@ void bili_decode::process(Json::Value messageArr, const msg_meta &conf)
     }
 }
 
-bool bili_decode::check(Json::Value message, const msg_meta &conf)
-{
+bool bili_decode::check(Json::Value message, const msg_meta &conf) {
     return true;
 }
 
-Json::Value bili_decode::get_raw_info(uint64_t aid)
-{
+Json::Value bili_decode::get_raw_info(uint64_t aid) {
     return string_to_json(
         do_get("https://api.bilibili.com",
                "/x/web-interface/view?aid=" + std::to_string(aid), false,
@@ -112,8 +106,7 @@ Json::Value bili_decode::get_raw_info(uint64_t aid)
                 {"Accept-Language", "zh-CN,zh;q=0.9"},
                 {"Connection", "keep-alive"}}));
 }
-Json::Value bili_decode::get_raw_info(std::string bvid)
-{
+Json::Value bili_decode::get_raw_info(std::string bvid) {
     return string_to_json(do_get("https://api.bilibili.com",
                                  "/x/web-interface/view?bvid=" + bvid, false,
                                  {{"user-agent", "curl/8.5.0"},
@@ -124,8 +117,7 @@ Json::Value bili_decode::get_raw_info(std::string bvid)
                                   {"Accept-Language", "zh-CN,zh;q=0.9"},
                                   {"Connection", "keep-alive"}}));
 }
-std::string bili_decode::get_decode_info(const Json::Value &raw_info)
-{
+std::string bili_decode::get_decode_info(const Json::Value &raw_info) {
     std::ostringstream oss;
     oss << "[CQ:image,file=" << raw_info["data"]["pic"].asString()
         << ",id=40000]\n";
@@ -146,11 +138,12 @@ std::string bili_decode::get_decode_info(const Json::Value &raw_info)
     oss << "简介：" << desc_str << std::endl;
 
     oss << "UP: " << raw_info["data"]["owner"]["name"].asString() << std::endl;
-    oss << fmt::format("播放 {:<8} 点赞 {:<8}\n回复 {:<8} 弹幕 {:<8}\n",
-                       to_human_string(raw_info["data"]["stat"]["view"].asInt64()),
-                       to_human_string(raw_info["data"]["stat"]["like"].asInt64()),
-                       to_human_string(raw_info["data"]["stat"]["reply"].asInt64()),
-                       to_human_string(raw_info["data"]["stat"]["danmaku"].asInt64()));
+    oss << fmt::format(
+        "播放 {:<8} 点赞 {:<8}\n回复 {:<8} 弹幕 {:<8}\n",
+        to_human_string(raw_info["data"]["stat"]["view"].asInt64()),
+        to_human_string(raw_info["data"]["stat"]["like"].asInt64()),
+        to_human_string(raw_info["data"]["stat"]["reply"].asInt64()),
+        to_human_string(raw_info["data"]["stat"]["danmaku"].asInt64()));
     oss << "Link: https://www.bilibili.com/video/" +
                raw_info["data"]["bvid"].asString() + "/"
         << std::endl;
@@ -172,8 +165,7 @@ std::string bili_decode::help() { return "对av和BV号，下载封面图和视�
 
 bool bili_decode::is_support_messageArr() { return true; }
 
-void bili_decode::process(std::string message, const msg_meta &conf)
-{
+void bili_decode::process(std::string message, const msg_meta &conf) {
     Json::Value raw_info;
     bool flg = false;
     size_t u;
@@ -199,8 +191,7 @@ void bili_decode::process(std::string message, const msg_meta &conf)
         if (flg) {
             raw_info = get_raw_info(bvid);
         }
-    }
-    else if ((u = message.find("av")) != message.npos) {
+    } else if ((u = message.find("av")) != message.npos) {
         if (u != 0 && is_word(message[u - 1])) {
             return;
         }
@@ -232,8 +223,7 @@ void bili_decode::process(std::string message, const msg_meta &conf)
                                       raw_info["data"]["bvid"].asString());
     }
 }
-bool bili_decode::check(std::string message, const msg_meta &conf)
-{
+bool bili_decode::check(std::string message, const msg_meta &conf) {
     return true;
 }
 

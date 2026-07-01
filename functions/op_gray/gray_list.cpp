@@ -1,8 +1,7 @@
 #include "gray_list.h"
 #include "utils.h"
 
-gray_list::gray_list()
-{
+gray_list::gray_list() {
     Json::Value J = string_to_json(readfile(
         bot_config_path(nullptr, "features/op_gray/g_list.json"), "{}"));
     for (std::string group_id_s : J.getMemberNames()) {
@@ -11,8 +10,7 @@ gray_list::gray_list()
     }
 }
 
-void gray_list::save()
-{
+void gray_list::save() {
     Json::Value J;
     for (auto it : g_list) {
         J[std::to_string(it.first)] = it.second;
@@ -21,8 +19,7 @@ void gray_list::save()
               J.toStyledString());
 }
 
-void gray_list::process(std::string message, const msg_meta &conf)
-{
+void gray_list::process(std::string message, const msg_meta &conf) {
     message = trim(message);
     userid_t user_id = my_string2uint64(message);
 
@@ -42,14 +39,12 @@ void gray_list::process(std::string message, const msg_meta &conf)
             s_conf.user_id = conf.user_id;
             conf.p->cq_send("无法踢出\nmsg: " + res["wording"].asString(),
                             s_conf);
-        }
-        else {
+        } else {
             conf.p->cq_send("两次添加灰名单，踢出 " + user_name, conf);
         }
         Json::Value ign;
         g_list[conf.group_id].removeIndex(ind, &ign);
-    }
-    else {
+    } else {
         Json::Value res = string_to_json(
             conf.p->cq_send("将 " + user_name + " 添加进灰名单", conf));
         if (res["status"].asString() == "failed") {
@@ -65,8 +60,7 @@ void gray_list::process(std::string message, const msg_meta &conf)
     }
     save();
 }
-bool gray_list::check(std::string message, const msg_meta &conf)
-{
+bool gray_list::check(std::string message, const msg_meta &conf) {
     return cmd_match_prefix(message, {"添加灰名单", "加入灰名单"}) &&
            conf.message_type == "group" &&
            is_group_op(conf.p, conf.group_id, conf.user_id);

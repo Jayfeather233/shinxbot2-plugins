@@ -17,14 +17,12 @@ static std::string nonogram_help_msg =
     "2：15x15\n"
     "3：20x20";
 
-void nonogram::load()
-{
+void nonogram::load() {
     Json::Value J;
     try {
         J = string_to_json(readfile(
             bot_config_path(nullptr, "features/nonogram/nonogram.json"), "[]"));
-    }
-    catch (...) {
+    } catch (...) {
         set_global_log(LOG::WARNING, "Failed to load nonogram levels");
         return;
     }
@@ -41,14 +39,12 @@ void nonogram::load()
     }
 }
 
-nonogram::nonogram()
-{
+nonogram::nonogram() {
     std::lock_guard<std::mutex> lock(data_rw);
     load();
 }
 
-void nonogram::reload()
-{
+void nonogram::reload() {
     std::lock_guard<std::mutex> lock(data_rw);
     user_current_levels.clear();
     group_current_levels.clear();
@@ -56,15 +52,13 @@ void nonogram::reload()
     load();
 }
 
-bool nonogram::reload(const msg_meta &conf)
-{
+bool nonogram::reload(const msg_meta &conf) {
     (void)conf;
     reload();
     return true;
 }
 
-std::string nonogram::parse_image_url(std::string message)
-{
+std::string nonogram::parse_image_url(std::string message) {
     size_t img_pos = message.find("[CQ:image");
     if (img_pos != std::string::npos) {
         size_t url_pos = message.find(",url=");
@@ -76,8 +70,7 @@ std::string nonogram::parse_image_url(std::string message)
     return "";
 }
 
-static std::string get_font_path()
-{
+static std::string get_font_path() {
     std::array<char, 256> buffer;
     std::string result;
 
@@ -96,8 +89,8 @@ static std::string get_font_path()
 
 void nonogram::generate_puzzle_image(
     const std::vector<std::vector<int>> &row_clues,
-    const std::vector<std::vector<int>> &col_clues, const std::string &filename)
-{
+    const std::vector<std::vector<int>> &col_clues,
+    const std::string &filename) {
     size_t rows = row_clues.size();
     size_t cols = col_clues.size();
     size_t max_col_clues =
@@ -180,8 +173,7 @@ void nonogram::generate_puzzle_image(
 }
 
 void nonogram::send_puzzle(std::shared_ptr<nonogram_level> level,
-                           const msg_meta &conf)
-{
+                           const msg_meta &conf) {
     std::string uuid = generate_uuid();
     const std::string puzzle_path =
         bot_resource_path(nullptr, "nonogram/" + uuid + ".png");
@@ -194,15 +186,13 @@ void nonogram::send_puzzle(std::shared_ptr<nonogram_level> level,
     fs::remove(puzzle_path);
 }
 
-inline bool is_painted_color(const Magick::ColorRGB color)
-{
+inline bool is_painted_color(const Magick::ColorRGB color) {
     return color.red() < 0.5 || color.green() < 0.5 || color.blue() < 0.5;
 }
 
 void dfs_outer(const Magick::Image &img, int x, int y,
                std::vector<std::vector<bool>> &is_outer, const int offx,
-               const int offy, const int max_width, const int max_height)
-{
+               const int offy, const int max_width, const int max_height) {
     if (x < 0 || y < 0 || x >= max_width || y >= max_height) {
         return;
     }
@@ -220,8 +210,7 @@ void dfs_outer(const Magick::Image &img, int x, int y,
 }
 
 double nonogram::check_cell(const Magick::Image &img, int width, int height,
-                            int offx, int offy)
-{
+                            int offx, int offy) {
     std::vector<std::vector<bool>> is_outer =
         std::vector<std::vector<bool>>(width, std::vector<bool>(height, false));
     for (int y = 0; y < width; y++) {
@@ -248,8 +237,7 @@ double nonogram::check_cell(const Magick::Image &img, int width, int height,
            ((width - 2 * width_padding) * (height - 2 * height_padding));
 }
 
-double find_threshold(const std::vector<std::vector<double>> &vv)
-{
+double find_threshold(const std::vector<std::vector<double>> &vv) {
     std::vector<double> v;
     for (const auto &row : vv) {
         for (double val : row) {
@@ -280,8 +268,7 @@ double find_threshold(const std::vector<std::vector<double>> &vv)
             if (std::abs(x - c1) < std::abs(x - c2)) {
                 sum1 += x;
                 cnt1++;
-            }
-            else {
+            } else {
                 sum2 += x;
                 cnt2++;
             }
@@ -314,8 +301,7 @@ double find_threshold(const std::vector<std::vector<double>> &vv)
         if (std::abs(x - c1) < std::abs(x - c2)) {
             sse1 += (x - c1) * (x - c1);
             cnt1++;
-        }
-        else {
+        } else {
             sse2 += (x - c2) * (x - c2);
             cnt2++;
         }
@@ -334,13 +320,11 @@ double find_threshold(const std::vector<std::vector<double>> &vv)
 std::vector<std::vector<double>>
 nonogram::get_user_data(std::string filename,
                         std::shared_ptr<nonogram_level> level,
-                        const msg_meta &conf)
-{
+                        const msg_meta &conf) {
     Magick::Image img;
     try {
         img.read(filename);
-    }
-    catch (...) {
+    } catch (...) {
         conf.p->setlog(LOG::WARNING,
                        "Failed to read submitted image: " + filename);
         conf.p->cq_send("无法读取提交的图片，请检查图片是否有效", conf);
@@ -387,8 +371,7 @@ nonogram::get_user_data(std::string filename,
 
 bool nonogram::check_game(std::string filename,
                           std::shared_ptr<nonogram_level> level,
-                          const msg_meta &conf)
-{
+                          const msg_meta &conf) {
     auto user_data = get_user_data(filename, level, conf);
     double threshold = find_threshold(user_data);
     conf.p->setlog(LOG::INFO,
@@ -407,8 +390,7 @@ bool nonogram::check_game(std::string filename,
     return true;
 }
 
-void nonogram::process_command(std::string message, const msg_meta &conf)
-{
+void nonogram::process_command(std::string message, const msg_meta &conf) {
     if (message == "*nonogram.help") {
         conf.p->cq_send(nonogram_help_msg, conf);
         return;
@@ -424,8 +406,7 @@ void nonogram::process_command(std::string message, const msg_meta &conf)
     if (message == "*nonogram.quit") {
         if (conf.message_type == "group") {
             group_current_levels.erase(conf.group_id);
-        }
-        else if (conf.message_type == "private") {
+        } else if (conf.message_type == "private") {
             user_current_levels.erase(conf.user_id);
         }
         conf.p->cq_send("游戏已退出", conf);
@@ -436,8 +417,7 @@ void nonogram::process_command(std::string message, const msg_meta &conf)
         int index = 0;
         if (index_str.empty()) {
             index = get_random(levels.size());
-        }
-        else {
+        } else {
             index = my_string2int64(index_str) - 1;
         }
 
@@ -458,22 +438,19 @@ void nonogram::process_command(std::string message, const msg_meta &conf)
                 conf.p->cq_send("本群已经有一个正在进行的nonogram游戏了，请完成"
                                 "它或者等待它结束后再开始新的游戏",
                                 conf);
-            }
-            else {
+            } else {
                 group_current_levels[conf.group_id] = level;
                 send_puzzle(group_current_levels[conf.group_id], conf);
                 conf.p->cq_send("@bot并回复图片以提交答案", conf);
             }
-        }
-        else if (conf.message_type == "private") {
+        } else if (conf.message_type == "private") {
             if (user_current_levels.find(conf.user_id) !=
                 user_current_levels.end()) {
                 send_puzzle(user_current_levels[conf.user_id], conf);
                 conf.p->cq_send("你已经有一个正在进行的nonogram游戏了，请完成它"
                                 "或者等待它结束后再开始新的游戏",
                                 conf);
-            }
-            else {
+            } else {
                 user_current_levels[conf.user_id] = level;
                 send_puzzle(user_current_levels[conf.user_id], conf);
                 conf.p->cq_send("@bot并回复图片以提交答案", conf);
@@ -482,8 +459,7 @@ void nonogram::process_command(std::string message, const msg_meta &conf)
     }
 }
 
-void nonogram::process(std::string message, const msg_meta &conf)
-{
+void nonogram::process(std::string message, const msg_meta &conf) {
     if (starts_with(message, "*nonogram")) {
         process_command(message, conf);
         return;
@@ -511,13 +487,11 @@ void nonogram::process(std::string message, const msg_meta &conf)
                     messageArr_to_string(res_json["data"]["message"]);
                 img = parse_image_url(reply_message);
             }
-        }
-        else {
+        } else {
             conf.p->setlog(LOG::WARNING, "Failed to parse reply message id");
             return;
         }
-    }
-    else {
+    } else {
         img = parse_image_url(message);
     }
     if (img.empty()) {
@@ -529,8 +503,7 @@ void nonogram::process(std::string message, const msg_meta &conf)
     std::string filename = nonogram_dir + "/" + uuid + ".png";
     try {
         download(cq_decode(img), nonogram_dir + "/", uuid + ".png");
-    }
-    catch (...) {
+    } catch (...) {
         conf.p->setlog(LOG::WARNING, "Failed to download image: " + img);
         conf.p->cq_send("无法下载图片，请检查图片链接是否有效", conf);
         return;
@@ -566,14 +539,12 @@ void nonogram::process(std::string message, const msg_meta &conf)
                             group_current_levels[conf.group_id]->get_pic()),
                 conf);
             group_current_levels.erase(conf.group_id);
-        }
-        else {
+        } else {
             conf.p->cq_send("答案不正确，请继续努力！", conf);
         }
-    }
-    else if (conf.message_type == "private" &&
-             user_current_levels.find(conf.user_id) !=
-                 user_current_levels.end()) {
+    } else if (conf.message_type == "private" &&
+               user_current_levels.find(conf.user_id) !=
+                   user_current_levels.end()) {
 
         if (message.find("test") != std::string::npos) {
             auto user_data = get_user_data(
@@ -599,15 +570,13 @@ void nonogram::process(std::string message, const msg_meta &conf)
                             user_current_levels[conf.user_id]->get_pic()),
                 conf);
             user_current_levels.erase(conf.user_id);
-        }
-        else {
+        } else {
             conf.p->cq_send("答案不正确，请继续努力！", conf);
         }
     }
     fs::remove(filename);
 }
-bool nonogram::check(std::string message, const msg_meta &conf)
-{
+bool nonogram::check(std::string message, const msg_meta &conf) {
     if (cmd_match_prefix(message, {"*nonogram"})) {
         return true;
     }
@@ -622,14 +591,13 @@ bool nonogram::check(std::string message, const msg_meta &conf)
     }
     return false;
 }
-std::string nonogram::help()
-{
+std::string nonogram::help() {
     return "nonogram 游戏：输入 *nonogram [1~3] 开始。帮助：*nonogram.help";
 }
 
-void nonogram::set_backup_files(archivist *p, const std::string &name)
-{
-    p->add_path(name, bot_resource_path(nullptr, "nonogram/answer/"), "resource/nonogram/answer/");
+void nonogram::set_backup_files(archivist *p, const std::string &name) {
+    p->add_path(name, bot_resource_path(nullptr, "nonogram/answer/"),
+                "resource/nonogram/answer/");
 }
 
 DECLARE_FACTORY_FUNCTIONS(nonogram)

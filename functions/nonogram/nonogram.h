@@ -16,8 +16,7 @@ class nonogram_level {
 
 public:
     nonogram_level(const std::vector<std::vector<bool>> &d,
-                   const std::string &p)
-    {
+                   const std::string &p) {
         data = d;
         pic = p;
         int rows = data.size();
@@ -29,8 +28,7 @@ public:
             for (int j = 0; j < cols; j++) {
                 if (data[i][j]) {
                     count++;
-                }
-                else {
+                } else {
                     if (count > 0) {
                         row_clues[i].push_back(count);
                         count = 0;
@@ -46,8 +44,7 @@ public:
             for (int i = 0; i < rows; i++) {
                 if (data[i][j]) {
                     count++;
-                }
-                else {
+                } else {
                     if (count > 0) {
                         col_clues[j].push_back(count);
                         count = 0;
@@ -59,12 +56,10 @@ public:
             }
         }
     }
-    const std::vector<std::vector<int>> &get_row_clues() const
-    {
+    const std::vector<std::vector<int>> &get_row_clues() const {
         return row_clues;
     }
-    const std::vector<std::vector<int>> &get_col_clues() const
-    {
+    const std::vector<std::vector<int>> &get_col_clues() const {
         return col_clues;
     }
     const std::vector<std::vector<bool>> &get_data() const { return data; }

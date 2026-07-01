@@ -6,16 +6,14 @@
 
 Json::Value catmain::cat_text;
 
-catmain::catmain()
-{
+catmain::catmain() {
     const std::string cat_text_path =
         bot_resource_path(nullptr, "cat/cat_text.json");
     std::string ans = readfile(cat_text_path);
     if (ans != "") {
         Json::Value J = string_to_json(ans);
         cat_text = J;
-    }
-    else {
+    } else {
         set_global_log(LOG::ERROR, "Missing file: " + cat_text_path);
     }
 
@@ -29,8 +27,7 @@ catmain::catmain()
     }
 }
 
-void catmain::save_map()
-{
+void catmain::save_map() {
     Json::Value J;
     for (auto it : cat_map) {
         J.append(it.first);
@@ -41,8 +38,7 @@ void catmain::save_map()
 
 Json::Value catmain::get_text() { return cat_text; }
 
-void catmain::process(std::string message, const msg_meta &conf)
-{
+void catmain::process(std::string message, const msg_meta &conf) {
     std::string body;
     if (!cmd_strip_prefix(message, "*cat", body)) {
         return;
@@ -61,54 +57,46 @@ void catmain::process(std::string message, const msg_meta &conf)
         if (it != cat_map.end()) {
             conf.p->cq_send("You already have one!", conf);
             return;
-        }
-        else {
+        } else {
             std::string name = trim(message.substr(19));
             if (name.length() <= 0) {
                 conf.p->cq_send("Please give it a name", conf);
                 return;
-            }
-            else {
+            } else {
                 Cat newcat(name, conf.user_id);
                 cat_map[conf.user_id] = newcat;
                 conf.p->cq_send(newcat.adopt(), conf);
                 save_map();
             }
         }
-    }
-    else if (message.find(".rename") == 13) {
+    } else if (message.find(".rename") == 13) {
         auto it = cat_map.find(conf.user_id);
         if (it == cat_map.end()) {
             conf.p->cq_send("You don't have one!", conf);
             return;
-        }
-        else {
+        } else {
             std::string name = trim(message.substr(20));
             if (name.length() <= 0) {
                 conf.p->cq_send("Please give it a name", conf);
                 return;
-            }
-            else {
+            } else {
                 conf.p->cq_send(it->second.rename(name), conf);
                 save_map();
             }
         }
-    }
-    else {
+    } else {
         auto it = cat_map.find(conf.user_id);
         if (it == cat_map.end()) {
             conf.p->cq_send("You don't have one!\n"
                             "Use *cat.adopt name to get a cute cat!",
                             conf);
             return;
-        }
-        else {
+        } else {
             conf.p->cq_send(it->second.process(message), conf);
         }
     }
 }
-bool catmain::check(std::string message, const msg_meta &conf)
-{
+bool catmain::check(std::string message, const msg_meta &conf) {
     (void)conf;
     return cmd_match_prefix(message, {"*cat"});
 }

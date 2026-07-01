@@ -18,8 +18,7 @@ static std::string forward_help_msg = "格式为：\n"
 
 Json::Value forward_msg_gen::get_data(bot *p, std::wstring s1,
                                       std::wistringstream &wiss,
-                                      groupid_t group_id)
-{
+                                      groupid_t group_id) {
     Json::Value res;
     std::wstring s2;
     std::wstring u;
@@ -47,8 +46,7 @@ Json::Value forward_msg_gen::get_data(bot *p, std::wstring s1,
     res["uin"] = std::to_string(uin); // TODO: maybe changed. But now its string
     if (s2 == L"转发") {
         res["content"] = get_content(p, wiss, group_id);
-    }
-    else {
+    } else {
         size_t pos = 0;
         for (;;) {
             pos = s2.find(L"[CQ:at,qq=", pos);
@@ -70,8 +68,7 @@ Json::Value forward_msg_gen::get_data(bot *p, std::wstring s1,
 }
 
 Json::Value forward_msg_gen::get_content(bot *p, std::wistringstream &wiss,
-                                         groupid_t group_id)
-{
+                                         groupid_t group_id) {
     std::wstring s1;
     Json::Value Ja;
     while (wiss >> s1) {
@@ -87,8 +84,7 @@ Json::Value forward_msg_gen::get_content(bot *p, std::wistringstream &wiss,
     return Ja;
 }
 
-void forward_msg_gen::process(std::string message, const msg_meta &conf)
-{
+void forward_msg_gen::process(std::string message, const msg_meta &conf) {
     message = substitute_image_segment(conf.p, message);
     Json::Value J;
     J["message_id"] = conf.message_id;
@@ -108,8 +104,7 @@ void forward_msg_gen::process(std::string message, const msg_meta &conf)
         conf.p->setlog(LOG::INFO, "forward_msg_gen at group " +
                                       std::to_string(conf.group_id) + " by " +
                                       std::to_string(conf.user_id));
-    }
-    else {
+    } else {
         J["user_id"] = conf.user_id;
         conf.p->cq_send("send_private_forward_msg", J);
         conf.p->setlog(LOG::INFO,
@@ -119,15 +114,13 @@ void forward_msg_gen::process(std::string message, const msg_meta &conf)
 
 bool forward_msg_gen::is_support_messageArr() { return false; }
 
-bool forward_msg_gen::check(std::string message, const msg_meta &conf)
-{
+bool forward_msg_gen::check(std::string message, const msg_meta &conf) {
     (void)conf;
     const std::wstring w = string_to_wstring(message);
     return starts_with(w, L"转发 ") || starts_with(w, L"转发\n");
 }
 
-std::string forward_msg_gen::help()
-{
+std::string forward_msg_gen::help() {
     return "自动生成转发信息： 详细资料请输入 转发帮助";
 }
 

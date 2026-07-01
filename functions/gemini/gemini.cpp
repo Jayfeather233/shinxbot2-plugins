@@ -125,8 +125,7 @@ const std::string help_msg =
     if (nowkey == keys.end())                                                  \
         nowkey = keys.begin();
 
-gemini::gemini()
-{
+gemini::gemini() {
     const std::string gemini_conf_path =
         bot_config_path(nullptr, "features/gemini/gemini.json");
 
@@ -142,8 +141,7 @@ gemini::gemini()
               "\"black_list\": [\"这是要屏蔽的词\"]"
               "}";
         of.close();
-    }
-    else {
+    } else {
         Json::Value conf = string_to_json(readfile(gemini_conf_path, "{}"));
         Json::ArrayIndex sz = conf["keys"].size();
         for (Json::ArrayIndex i = 0; i < sz; ++i) {
@@ -162,8 +160,7 @@ gemini::gemini()
     }
 }
 
-size_t gemini::get_tokens(const Json::Value &history)
-{
+size_t gemini::get_tokens(const Json::Value &history) {
     Json::Value qes;
     qes["content"] = history;
     qes = string_to_json(
@@ -173,8 +170,7 @@ size_t gemini::get_tokens(const Json::Value &history)
     return qes["totalTokens"].as<size_t>();
 }
 
-void gemini::shrink_prompt_size(uint64_t u, bool is_vision)
-{
+void gemini::shrink_prompt_size(uint64_t u, bool is_vision) {
     size_t limits = is_vision ? (MAX_PRO_VISION_LENGTH - MAX_PRO_VISION_REPLY)
                               : (MAX_PRO_LENGTH - MAX_PRO_REPLY);
     Json::Value ign;
@@ -183,11 +179,12 @@ void gemini::shrink_prompt_size(uint64_t u, bool is_vision)
     }
 }
 
-std::string gemini::generate_text(std::string message, uint64_t id, uint64_t user_id)
-{
+std::string gemini::generate_text(std::string message, uint64_t id,
+                                  uint64_t user_id) {
     Json::Value J;
     J["role"] = "user";
-    J["parts"][0]["text"] = "[User: " + std::to_string(user_id) + "] " + message;
+    J["parts"][0]["text"] =
+        "[User: " + std::to_string(user_id) + "] " + message;
     history[0][id].append(J);
     J.clear();
     J["contents"] = history[0][id];
@@ -200,8 +197,7 @@ std::string gemini::generate_text(std::string message, uint64_t id, uint64_t use
     std::string str_ans;
     if (res.isMember("error")) {
         str_ans = res.toStyledString();
-    }
-    else {
+    } else {
         str_ans =
             res["candidates"][0]["content"]["parts"][0]["text"].asString();
         J.clear();
@@ -211,8 +207,8 @@ std::string gemini::generate_text(std::string message, uint64_t id, uint64_t use
     }
     return str_ans;
 }
-std::string gemini::generate_image(std::string message, uint64_t id, uint64_t user_id)
-{
+std::string gemini::generate_image(std::string message, uint64_t id,
+                                   uint64_t user_id) {
     int cnt = 0;
     size_t index = -1, index2 = -1;
     std::string fn = std::to_string(get_random());
@@ -237,13 +233,13 @@ std::string gemini::generate_image(std::string message, uint64_t id, uint64_t us
         // J["parts"][0]["text"] = message;
         // history[1][id].append(J);
         return "Picture please.";
-    }
-    else {
+    } else {
         std::pair<std::string, std::string> img =
             image2base64(bot_resource_path(nullptr, "download/" + fn));
         J["role"] = "user";
-        J["parts"][0]["text"] =
-            "[User: " + std::to_string(user_id) + "] " + message.substr(0, index) + message.substr(index2 + 1);
+        J["parts"][0]["text"] = "[User: " + std::to_string(user_id) + "] " +
+                                message.substr(0, index) +
+                                message.substr(index2 + 1);
         J["parts"][1]["inline_data"]["mime_type"] = img.first;
         J["parts"][1]["inline_data"]["data"] = img.second;
         // history[1][id].append(J);
@@ -261,8 +257,7 @@ std::string gemini::generate_image(std::string message, uint64_t id, uint64_t us
     std::string str_ans;
     if (res.isMember("error")) {
         str_ans = res.toStyledString();
-    }
-    else {
+    } else {
         str_ans =
             res["candidates"][0]["content"]["parts"][0]["text"].asString();
         // str_ans = res.toStyledString();
@@ -274,8 +269,7 @@ std::string gemini::generate_image(std::string message, uint64_t id, uint64_t us
     return str_ans;
 }
 
-void gemini::process(std::string message, const msg_meta &conf)
-{
+void gemini::process(std::string message, const msg_meta &conf) {
     uint64_t id = conf.message_type == "group" ? (conf.group_id << 1)
                                                : ((conf.user_id << 1) | 1);
     message = trim(message.substr(4));
@@ -313,19 +307,16 @@ void gemini::process(std::string message, const msg_meta &conf)
 
     if (is_vision) {
         result = generate_image(message, id, conf.user_id);
-    }
-    else {
+    } else {
         result = generate_text(message, id, conf.user_id);
     }
     cq_send(conf.p, result, conf);
 }
-bool gemini::check(std::string message, const msg_meta &conf)
-{
+bool gemini::check(std::string message, const msg_meta &conf) {
     (void)conf;
     return cmd_match_prefix(message, {".gem"});
 }
-std::string gemini::help()
-{
+std::string gemini::help() {
     return "gemini: MultiModal AI,\n\tuseage: .gem for text only,\n\t.gemvi "
            "for image with text";
 }

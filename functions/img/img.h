@@ -11,19 +11,16 @@ private:
     std::map<T2, std::vector<T1>> mp2;
 
 public:
-    void clear()
-    {
+    void clear() {
         mp1.clear();
         mp2.clear();
     }
 
-    void insert(const T1 &a, const T2 &b)
-    {
+    void insert(const T1 &a, const T2 &b) {
         mp1[a].push_back(b);
         mp2[b].push_back(a);
     }
-    void erase_by_first(const T1 &a)
-    {
+    void erase_by_first(const T1 &a) {
         auto it = mp1.find(a);
         if (it != mp1.end()) {
             for (const auto &b : it->second) {
@@ -36,8 +33,7 @@ public:
             mp1.erase(it);
         }
     }
-    void erase_by_second(const T2 &b)
-    {
+    void erase_by_second(const T2 &b) {
         auto it = mp2.find(b);
         if (it != mp2.end()) {
             for (const auto &a : it->second) {
@@ -51,42 +47,36 @@ public:
         }
     }
     // get all possible T1 elements
-    std::vector<T1> get_by_first() const
-    {
+    std::vector<T1> get_by_first() const {
         std::vector<T1> keys;
         for (const auto &pair : mp1) {
             keys.push_back(pair.first);
         }
         return keys;
     }
-    const std::vector<T2> &get_by_first(const T1 &a) const
-    {
+    const std::vector<T2> &get_by_first(const T1 &a) const {
         static const std::vector<T2> empty;
         auto it = mp1.find(a);
         if (it != mp1.end()) {
             return it->second;
-        }
-        else {
+        } else {
             return empty;
         }
     }
     // get all possible T2 elements
-    std::vector<T2> get_by_second() const
-    {
+    std::vector<T2> get_by_second() const {
         std::vector<T2> keys;
         for (const auto &pair : mp2) {
             keys.push_back(pair.first);
         }
         return keys;
     }
-    const std::vector<T1> &get_by_second(const T2 &b) const
-    {
+    const std::vector<T1> &get_by_second(const T2 &b) const {
         static const std::vector<T1> empty;
         auto it = mp2.find(b);
         if (it != mp2.end()) {
             return it->second;
-        }
-        else {
+        } else {
             return empty;
         }
     }

@@ -5,8 +5,7 @@
 #include <map>
 static std::map<userid_t, bool> in_queue;
 
-std::string ocr::ocr_tostring(const Json::Value &J)
-{
+std::string ocr::ocr_tostring(const Json::Value &J) {
     Json::ArrayIndex sz = J.size();
     std::ostringstream oss;
     long long top, bottom, center;
@@ -25,8 +24,7 @@ std::string ocr::ocr_tostring(const Json::Value &J)
                 oss << std::endl;
                 --i;
                 break;
-            }
-            else {
+            } else {
                 top = (top + new_top) >> 1;
                 bottom = (bottom + new_bottom) >> 1;
                 oss << ' ' << J[i]["text"].asString();
@@ -37,8 +35,7 @@ std::string ocr::ocr_tostring(const Json::Value &J)
     return oss.str();
 }
 
-void ocr::process(std::string message, const msg_meta &conf)
-{
+void ocr::process(std::string message, const msg_meta &conf) {
     size_t index = message.find("[CQ:image,file=");
     if (index == std::string::npos) {
         if (in_queue[conf.user_id] == true) {
@@ -67,8 +64,7 @@ void ocr::process(std::string message, const msg_meta &conf)
     conf.p->setlog(LOG::INFO, "OCR at group " + std::to_string(conf.group_id) +
                                   " by " + std::to_string(conf.user_id));
 }
-bool ocr::check(std::string message, const msg_meta &conf)
-{
+bool ocr::check(std::string message, const msg_meta &conf) {
     return cmd_match_prefix(message, {".ocr", ".OCR"}) ||
            (in_queue.find(conf.user_id) != in_queue.end() &&
             in_queue[conf.user_id] == true);

@@ -20,13 +20,11 @@ std::string Cat::generateRandomColor() { return colors[get_random(5)]; }
 
 std::string Cat::generateRandomPattern() { return patterns[get_random(5)]; }
 
-std::string Cat::getLocationString(Place location)
-{
+std::string Cat::getLocationString(Place location) {
     return place_to_string[location];
 }
 
-std::string Cat::get_random_text(const Json::Value &J)
-{
+std::string Cat::get_random_text(const Json::Value &J) {
     Json::ArrayIndex sz = J.size();
     std::string res = J[get_random(sz)].asString();
     size_t pos = res.find("{cat_name}");
@@ -38,8 +36,7 @@ std::string Cat::get_random_text(const Json::Value &J)
     return res;
 }
 
-std::string Cat::getinfo()
-{
+std::string Cat::getinfo() {
     Json::Value J;
     J["name"] = name;
     J["color"] = bodyColor;
@@ -51,8 +48,7 @@ std::string Cat::getinfo()
     J["place"] = location;
     return J.toStyledString();
 }
-std::string Cat::get_humanread_info()
-{
+std::string Cat::get_humanread_info() {
     std::ostringstream oss;
     oss << "name:\t" << name << std::endl;
     oss << "color:\t" << bodyColor << std::endl;
@@ -65,15 +61,13 @@ std::string Cat::get_humanread_info()
     return oss.str();
 }
 
-void Cat::save_cat()
-{
+void Cat::save_cat() {
     writefile(bot_config_path(nullptr, "features/cat/users/" +
                                            std::to_string(_id) + ".json"),
               getinfo());
 }
 
-Cat::Cat(const std::string &name, userid_t user_id) : _id(user_id)
-{
+Cat::Cat(const std::string &name, userid_t user_id) : _id(user_id) {
     this->name = name;
     this->food = 50;
     this->water = 50;
@@ -85,8 +79,7 @@ Cat::Cat(const std::string &name, userid_t user_id) : _id(user_id)
     save_cat();
 }
 
-Cat::Cat(userid_t user_id) : _id(user_id)
-{
+Cat::Cat(userid_t user_id) : _id(user_id) {
     if (user_id == 0)
         return;
 
@@ -104,33 +97,28 @@ Cat::Cat(userid_t user_id) : _id(user_id)
         affection = J["affection"].asInt();
         lastVisitTime = J["visit"].asInt64();
         location = static_cast<Place>(J["place"].asInt64());
-    }
-    else {
+    } else {
         set_global_log(LOG::ERROR,
                        "Missing cat file, user: " + std::to_string(user_id));
     }
 }
 
-std::string Cat::adopt()
-{
+std::string Cat::adopt() {
     return get_random_text(catmain::get_text()["adopt"]) + "\n" +
            get_humanread_info();
 }
-std::string Cat::intro()
-{
+std::string Cat::intro() {
     return get_random_text(catmain::get_text()["intro"]) + "\n" +
            get_humanread_info();
 }
-std::string Cat::pat()
-{
+std::string Cat::pat() {
     this->affection += 10;
     this->affection = std::min(this->affection, 255);
     this->lastVisitTime = time(nullptr);
     save_cat();
     return get_random_text(catmain::get_text()["pat"]);
 }
-std::string Cat::feed()
-{
+std::string Cat::feed() {
     if (this->food >= 90) {
         this->lastVisitTime = time(nullptr);
         save_cat();
@@ -145,8 +133,7 @@ std::string Cat::feed()
     save_cat();
     return get_random_text(catmain::get_text()["feed"]["hungry"]);
 }
-std::string Cat::water_f()
-{
+std::string Cat::water_f() {
     if (this->water >= 90) {
         this->lastVisitTime = time(nullptr);
         save_cat();
@@ -157,8 +144,7 @@ std::string Cat::water_f()
     save_cat();
     return get_random_text(catmain::get_text()["water"]["thirsty"]);
 }
-std::string Cat::play()
-{
+std::string Cat::play() {
     this->affection += 10;
     this->food -= 5;
     this->food = std::max(this->food, 0);
@@ -167,8 +153,7 @@ std::string Cat::play()
     save_cat();
     return get_random_text(catmain::get_text()["play"]);
 }
-std::string Cat::care()
-{
+std::string Cat::care() {
     this->food += 5;
     this->water += 5;
     this->affection += 5;
@@ -179,8 +164,7 @@ std::string Cat::care()
     save_cat();
     return get_random_text(catmain::get_text()["care"]);
 }
-std::string Cat::move()
-{
+std::string Cat::move() {
     Place new_pos;
     do {
         new_pos = static_cast<Place>(get_random(4));
@@ -193,15 +177,13 @@ std::string Cat::move()
     return oss.str();
 }
 
-std::string Cat::rename(const std::string &name)
-{
+std::string Cat::rename(const std::string &name) {
     this->name = name;
     save_cat();
     return "change name to " + name;
 }
 
-std::string Cat::process(const std::string &input)
-{
+std::string Cat::process(const std::string &input) {
     if (time(nullptr) - this->lastVisitTime > 3600 * 6) {
         this->affection -= 10;
         this->water -=
@@ -221,28 +203,21 @@ std::string Cat::process(const std::string &input)
     if (input.find("intro") != std::string::npos ||
         input.find("info") != std::string::npos) {
         res += intro();
-    }
-    else if (input.find("pat") != std::string::npos ||
-             input.find("pet") != std::string::npos) {
+    } else if (input.find("pat") != std::string::npos ||
+               input.find("pet") != std::string::npos) {
         res += pat();
-    }
-    else if (input.find("feed") != std::string::npos ||
-             input.find("food") != std::string::npos) {
+    } else if (input.find("feed") != std::string::npos ||
+               input.find("food") != std::string::npos) {
         res += feed();
-    }
-    else if (input.find("water") != std::string::npos) {
+    } else if (input.find("water") != std::string::npos) {
         res += water_f();
-    }
-    else if (input.find("play") != std::string::npos) {
+    } else if (input.find("play") != std::string::npos) {
         res += play();
-    }
-    else if (input.find("care") != std::string::npos) {
+    } else if (input.find("care") != std::string::npos) {
         res += care();
-    }
-    else if (input.find("abandon") != std::string::npos) {
+    } else if (input.find("abandon") != std::string::npos) {
         res += "YOU.SHOULD.NOT.DO.THAT.";
-    }
-    else {
+    } else {
         res += "I don't recognize that.";
     }
     return res;

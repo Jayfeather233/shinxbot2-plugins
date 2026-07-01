@@ -12,8 +12,8 @@ static std::string inform_help = "inform.list 列出当前消息\n"
                                  "加入一条提醒消息，其中hh,mm可为*或不填默认0\n"
                                  "inform.del id 删除";
 
-std::pair<bool, std::string> informer::isValidTime(const std::string &timeInput)
-{
+std::pair<bool, std::string>
+informer::isValidTime(const std::string &timeInput) {
     // Split the input string by colons (:)
     std::vector<std::string> parts;
     std::stringstream ss(timeInput);
@@ -24,15 +24,13 @@ std::pair<bool, std::string> informer::isValidTime(const std::string &timeInput)
         try {
             if (part == "*") {
                 wday = -1;
-            }
-            else {
+            } else {
                 wday = std::stoi(part);
                 if (wday <= 0 || wday >= 8) {
                     return std::make_pair(false, "");
                 }
             }
-        }
-        catch (...) {
+        } catch (...) {
             return std::make_pair(false, "");
         }
     }
@@ -55,8 +53,7 @@ std::pair<bool, std::string> informer::isValidTime(const std::string &timeInput)
         try {
             int value = std::stoi(component);
             return value >= min && value <= max;
-        }
-        catch (...) {
+        } catch (...) {
             return false;
         }
     };
@@ -77,8 +74,7 @@ std::pair<bool, std::string> informer::isValidTime(const std::string &timeInput)
     std::ostringstream std_reg;
     if (wday == -1) {
         std_reg << "\\d+(-)";
-    }
-    else {
+    } else {
         std_reg << wday % 7 << "(-)";
     }
     for (; i < parts.size(); ++i) {
@@ -86,8 +82,7 @@ std::pair<bool, std::string> informer::isValidTime(const std::string &timeInput)
             std_reg << ":";
         if (parts[i] == "*") {
             std_reg << "\\d+";
-        }
-        else {
+        } else {
             std_reg << std::setw(2) << std::setfill('0') << std::stoi(parts[i]);
         }
     }
@@ -100,8 +95,7 @@ std::pair<bool, std::string> informer::isValidTime(const std::string &timeInput)
     // If all components are valid, return true
     return std::make_pair(true, std_reg.str());
 }
-void informer::check_inform(bot *p)
-{
+void informer::check_inform(bot *p) {
     auto nowtime = std::chrono::system_clock::now();
     std::time_t currentTime = std::chrono::system_clock::to_time_t(nowtime);
     std::tm localTime = *std::localtime(&currentTime);
@@ -121,8 +115,7 @@ void informer::check_inform(bot *p)
                         conf.message_type = "group";
                         conf.group_id = x.first >> 1;
                         conf.user_id = 0;
-                    }
-                    else {
+                    } else {
                         conf.message_type = "private";
                         conf.user_id = x.first >> 1;
                         conf.group_id = 0;
@@ -130,15 +123,13 @@ void informer::check_inform(bot *p)
                     p->cq_send(std::get<2>(t), conf);
                     std::get<0>(t) = false;
                 }
-            }
-            else {
+            } else {
                 std::get<0>(t) = true;
             }
         }
     }
 }
-std::string informer::inform_list(const msg_meta &conf)
-{
+std::string informer::inform_list(const msg_meta &conf) {
     std::ostringstream oss;
     uint64_t k = conf.message_type == "private" ? (conf.user_id << 1)
                                                 : ((conf.group_id << 1) + 1);
@@ -151,8 +142,7 @@ std::string informer::inform_list(const msg_meta &conf)
     return oss.str();
 }
 
-void informer::process(std::string message, const msg_meta &conf)
-{
+void informer::process(std::string message, const msg_meta &conf) {
     std::string body = message.size() > 7 ? trim(message.substr(7)) : "";
     const auto add_handler = [&](const std::string &args) {
         std::string inputtime, inputmsg;
@@ -161,7 +151,9 @@ void informer::process(std::string message, const msg_meta &conf)
         inputmsg = trim(args.substr(inputtime.size()));
 
         if (inputmsg.empty()) {
-            conf.p->cq_send("请输入提醒内容。格式: inform.add [wday-]hh[:mm] message", conf);
+            conf.p->cq_send(
+                "请输入提醒内容。格式: inform.add [wday-]hh[:mm] message",
+                conf);
             return true;
         }
         // TODO: download image and change inputmsg to local image path
@@ -175,8 +167,7 @@ void informer::process(std::string message, const msg_meta &conf)
                 std::make_tuple(true, result.second, inputmsg));
             conf.p->cq_send("Added.", conf);
             save();
-        }
-        else {
+        } else {
             conf.p->cq_send("Invalid time pattern.", conf);
         }
         return true;
@@ -218,8 +209,7 @@ void informer::process(std::string message, const msg_meta &conf)
     }
 }
 
-void informer::save()
-{
+void informer::save() {
     Json::Value Ja;
     for (auto &x : this->inform_tuplelist) {
         for (auto &v : x.second) {
@@ -238,8 +228,7 @@ void informer::save()
 informer::informer() { read(); }
 informer::~informer() { save(); }
 
-void informer::read()
-{
+void informer::read() {
     inform_tuplelist.clear();
     Json::Value res = string_to_json(readfile(
         bot_config_path(nullptr, "features/informer/informer.json"), "[]"));
@@ -249,22 +238,20 @@ void informer::read()
     }
 }
 
-bool informer::reload(const msg_meta &conf)
-{
+bool informer::reload(const msg_meta &conf) {
     (void)conf;
     read();
     return true;
 }
 
-bool informer::check(std::string message, const msg_meta &conf)
-{
+bool informer::check(std::string message, const msg_meta &conf) {
     (void)conf;
     return cmd_match_prefix(message, {"inform."});
 }
 std::string informer::help() { return "定时提醒。详情 inform.help"; }
 
-void informer::set_callback(std::function<void(std::function<void(bot *p)>)> f)
-{
+void informer::set_callback(
+    std::function<void(std::function<void(bot *p)>)> f) {
     f([this](bot *p) { this->check_inform(p); });
 }
 

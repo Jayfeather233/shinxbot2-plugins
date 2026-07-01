@@ -1,8 +1,7 @@
 #include "friendadd.h"
 #include "internal_message.hpp"
 
-void friendadd::process(bot *p, Json::Value J)
-{
+void friendadd::process(bot *p, Json::Value J) {
     if (!J.isMember("flag")) {
         return;
     }
@@ -13,8 +12,7 @@ void friendadd::process(bot *p, Json::Value J)
 
     p->input_process(w.toStyledString());
 }
-bool friendadd::check(bot *p, Json::Value J)
-{
+bool friendadd::check(bot *p, Json::Value J) {
     (void)p;
     return J.isMember("post_type") && J.isMember("request_type") &&
            J["post_type"].asString() == "request" &&

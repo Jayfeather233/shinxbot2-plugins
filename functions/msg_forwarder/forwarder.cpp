@@ -3,16 +3,14 @@
 
 #include <iostream>
 
-inline bool check_valid(const point_t &a, const point_t &b)
-{
+inline bool check_valid(const point_t &a, const point_t &b) {
     return (a.first == 0 || b.first == 0 || a.first == b.first) &&
            (a.second == 0 || b.second == 0 || a.second == b.second);
 }
 
 forwarder::forwarder() { load_config(); }
 
-void forwarder::load_config()
-{
+void forwarder::load_config() {
     forward_set.clear();
     Json::Value J = string_to_json(readfile(
         bot_config_path(nullptr, "features/forwarder/forwarder.json"), "[]"));
@@ -26,8 +24,7 @@ void forwarder::load_config()
     }
 }
 
-void forwarder::save()
-{
+void forwarder::save() {
     Json::Value Ja;
     for (auto it : forward_set) {
         Json::Value J;
@@ -41,15 +38,13 @@ void forwarder::save()
               Ja.toStyledString());
 }
 
-size_t forwarder::configure(const std::string &message, const msg_meta &conf)
-{
+size_t forwarder::configure(const std::string &message, const msg_meta &conf) {
     point_t from, to;
     std::string args;
     bool is_set = false;
     if (cmd_strip_prefix(message, "forward.set", args)) {
         is_set = true;
-    }
-    else if (!cmd_strip_prefix(message, "forward.del", args)) {
+    } else if (!cmd_strip_prefix(message, "forward.del", args)) {
         return static_cast<size_t>(-1);
     }
 
@@ -76,8 +71,7 @@ size_t forwarder::configure(const std::string &message, const msg_meta &conf)
     return ret;
 }
 
-bool is_full_msg(const std::string &message)
-{
+bool is_full_msg(const std::string &message) {
     return message.find("[CQ:vedio") == 0 || message.find("[CQ:record") == 0 ||
            message.find("[CQ:share") == 0 || message.find("[CQ:contact") == 0 ||
            message.find("[CQ:location") == 0 ||
@@ -85,8 +79,7 @@ bool is_full_msg(const std::string &message)
            message.find("[CQ:json") == 0;
 }
 
-void forwarder::process(std::string message, const msg_meta &conf)
-{
+void forwarder::process(std::string message, const msg_meta &conf) {
     const std::string normalized = trim(message);
     if (cmd_match_exact(normalized, {"forward.help"})) {
         conf.p->cq_send(
@@ -141,8 +134,7 @@ void forwarder::process(std::string message, const msg_meta &conf)
                     J["user_id"] = it.second.second;
                     J["messages"] = Ja;
                     conf.p->cq_send("send_private_forward_msg", J);
-                }
-                else {
+                } else {
                     conf.p->cq_send(all_msg,
                                     (msg_meta){"group", 0, it.second.first, 0});
                     Json::Value J;
@@ -150,14 +142,12 @@ void forwarder::process(std::string message, const msg_meta &conf)
                     J["messages"] = Ja;
                     conf.p->cq_send("send_group_forward_msg", J);
                 }
-            }
-            else {
+            } else {
                 if (it.second.first == 0) {
                     conf.p->cq_send(
                         all_msg + message,
                         (msg_meta){"private", it.second.second, 0, 0});
-                }
-                else {
+                } else {
                     conf.p->cq_send(all_msg + message,
                                     (msg_meta){"group", 0, it.second.first, 0});
                 }
@@ -165,15 +155,13 @@ void forwarder::process(std::string message, const msg_meta &conf)
         }
     }
 }
-bool forwarder::check(std::string message, const msg_meta &conf)
-{
+bool forwarder::check(std::string message, const msg_meta &conf) {
     (void)message;
     (void)conf;
     return true;
 }
 
-bool forwarder::reload(const msg_meta &conf)
-{
+bool forwarder::reload(const msg_meta &conf) {
     (void)conf;
     load_config();
     return true;

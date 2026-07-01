@@ -2,9 +2,9 @@
 
 #include <jsoncpp/json/json.h>
 #include <map>
+#include <mutex>
 #include <set>
 #include <vector>
-#include <mutex>
 
 class gpt3_5 : public processable {
 private:
@@ -29,8 +29,11 @@ private:
     std::string base_url;
     std::string model_name;
     int compress_recent_rounds = 10;
-    std::string get_quoted_content(const bot *p, int64_t reply_id, int depth = 0);
-    std::string expand_forward_content(const bot *p, const std::string &forward_id, int depth);
+    std::string get_quoted_content(const bot *p, int64_t reply_id,
+                                   int depth = 0);
+    std::string expand_forward_content(const bot *p,
+                                       const std::string &forward_id,
+                                       int depth);
     bool try_acquire_session(int64_t id, size_t keyid, const msg_meta &conf,
                              bool ensure_default_prompt = true);
     void release_session(int64_t id, size_t keyid);
@@ -43,7 +46,8 @@ private:
                          bool silent = false);
     uintmax_t get_archives_total_size();
     void list_archives(int64_t id, const msg_meta &conf, int page);
-    void restore_archive(int64_t id, const msg_meta &conf, const std::string &arg);
+    void restore_archive(int64_t id, const msg_meta &conf,
+                         const std::string &arg);
     bool is_allowed_arc(int64_t id, const msg_meta &conf);
 
     int arc_check_counter = 0;

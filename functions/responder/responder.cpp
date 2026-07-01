@@ -12,8 +12,7 @@ static std::string HELP =
     "reply.del [group_id] [trigger]\n"
     "若为特殊触发词 $m_welcome 设置了内容, 这个触发词将在有新人入群时自动触发\n"
     "只能由群管理员操作。";
-void Responder::process(std::string message, const msg_meta &conf)
-{
+void Responder::process(std::string message, const msg_meta &conf) {
     auto it = is_adding.find(conf.user_id);
     if (it != is_adding.end()) {
         if (conf.message_type == "private" ||
@@ -39,8 +38,7 @@ void Responder::process(std::string message, const msg_meta &conf)
                 size_t space_pos = body.find(' ');
                 group_id = std::stoull(body.substr(0, space_pos));
                 body = trim(body.substr(space_pos + 1));
-            }
-            catch (...) {
+            } catch (...) {
                 conf.p->cq_send(
                     "参数错误。请使用 reply.add [group_id] [trigger] "
                     "[response] 格式（response可以在第二条消息中发出）",
@@ -86,8 +84,7 @@ void Responder::process(std::string message, const msg_meta &conf)
                 size_t space_pos = body.find(' ');
                 group_id = std::stoull(body.substr(0, space_pos));
                 body = trim(body.substr(space_pos + 1));
-            }
-            catch (...) {
+            } catch (...) {
                 conf.p->cq_send(
                     "参数错误。请使用 reply.add [group_id] [trigger] "
                     "[response] 格式（response可以在第二条消息中发出）",
@@ -103,8 +100,7 @@ void Responder::process(std::string message, const msg_meta &conf)
         if (replies[group_id].erase(trigger)) {
             save();
             conf.p->cq_send("删除成功", conf);
-        }
-        else {
+        } else {
             conf.p->cq_send("没有找到对应的触发消息", conf);
         }
         return true;
@@ -121,8 +117,7 @@ void Responder::process(std::string message, const msg_meta &conf)
                 size_t space_pos = body.find(' ');
                 group_id = std::stoull(body.substr(0, space_pos));
                 body = trim(body.substr(space_pos + 1));
-            }
-            catch (...) {
+            } catch (...) {
                 conf.p->cq_send(
                     "参数错误。请使用 reply.trigger [group_id] [0/1] 格式",
                     conf);
@@ -140,8 +135,7 @@ void Responder::process(std::string message, const msg_meta &conf)
             conf.p->cq_send(fmt::format("触发人设置为{}",
                                         trigger_by[group_id] ? "管理" : "全员"),
                             conf);
-        }
-        catch (...) {
+        } catch (...) {
             conf.p->cq_send("参数错误。0: 全员；1：管理", conf);
         }
         return true;
@@ -152,8 +146,7 @@ void Responder::process(std::string message, const msg_meta &conf)
         if (conf.message_type != "group") {
             try {
                 group_id = std::stoull(trim(message.substr(10)));
-            }
-            catch (...) {
+            } catch (...) {
                 conf.p->cq_send("参数错误。请使用 reply.list [group_id] 格式",
                                 conf);
                 return true;
@@ -195,16 +188,13 @@ void Responder::process(std::string message, const msg_meta &conf)
             size_t space_pos = message.find(' ');
             groupid = my_string2uint64(message.substr(space_pos + 1));
             message = message.substr(0, space_pos);
-        }
-        catch (...) {
+        } catch (...) {
             return;
         }
-    }
-    else if (conf.message_type != "group") {
+    } else if (conf.message_type != "group") {
         return;
-    }
-    else if (trigger_by[conf.group_id] && !conf.p->is_op(conf.user_id) &&
-             !is_group_op(conf.p, conf.group_id, conf.user_id)) {
+    } else if (trigger_by[conf.group_id] && !conf.p->is_op(conf.user_id) &&
+               !is_group_op(conf.p, conf.group_id, conf.user_id)) {
         return;
     }
     if (groupid == 0) {
@@ -216,8 +206,7 @@ void Responder::process(std::string message, const msg_meta &conf)
 
 void Responder::send_reply_by_trigger(groupid_t group_id,
                                       const std::string &trigger,
-                                      const msg_meta &conf)
-{
+                                      const msg_meta &conf) {
     if (group_id == 0 || conf.p == nullptr) {
         return;
     }
@@ -239,20 +228,17 @@ void Responder::send_reply_by_trigger(groupid_t group_id,
         if (conf.message_type == "private") {
             J["user_id"] = conf.user_id;
             conf.p->cq_send("send_private_forward_msg", J);
-        }
-        else {
+        } else {
             J["group_id"] = group_id;
             conf.p->cq_send("send_group_forward_msg", J);
         }
-    }
-    else {
+    } else {
         conf.p->cq_send(response, conf);
     }
     return;
 }
 
-void Responder::save()
-{
+void Responder::save() {
     Json::Value J;
     for (const auto &group_pair : replies) {
         Json::Value group_val;
@@ -270,8 +256,7 @@ void Responder::save()
               J.toStyledString());
 }
 
-void Responder::load()
-{
+void Responder::load() {
     replies.clear();
     trigger_by.clear();
 
@@ -280,8 +265,7 @@ void Responder::load()
         J = string_to_json(readfile(
             bot_config_path(nullptr, "features/responder/responder.json"),
             "{}"));
-    }
-    catch (...) {
+    } catch (...) {
         return;
     }
     for (const auto &group_member : J.getMemberNames()) {
@@ -292,8 +276,7 @@ void Responder::load()
                 replies[group_id][reply_member] =
                     group_val[reply_member].asString();
             }
-        }
-        catch (...) {
+        } catch (...) {
             continue;
         }
     }
@@ -307,21 +290,18 @@ void Responder::load()
 
 Responder::Responder() { load(); }
 
-bool Responder::reload(const msg_meta &conf)
-{
+bool Responder::reload(const msg_meta &conf) {
     (void)conf;
     load();
     return true;
 }
 
-bool Responder::check(std::string message, const msg_meta &conf)
-{
+bool Responder::check(std::string message, const msg_meta &conf) {
     return conf.message_type == "group" || conf.message_type == "private";
 }
 std::string Responder::help() { return "固定消息回复功能：reply.help"; }
 
-std::string substitute_image(std::string res)
-{
+std::string substitute_image(std::string res) {
     const std::string reply_dir = bot_resource_path("reply");
     fs::create_directories(reply_dir);
     size_t pos = 0, pos2, pos_file, file_end, pos_url, url_end;
@@ -356,16 +336,14 @@ std::string substitute_image(std::string res)
                         "[CQ:image,file=file://" +
                             fs::absolute(fs::path(local_path)).string() +
                             ",id=40000]");
-        }
-        catch (...) {
+        } catch (...) {
             pos = pos2 + 1;
             continue;
         }
     }
     return res;
 }
-Json::Value substitue_image(const Json::Value &J)
-{
+Json::Value substitue_image(const Json::Value &J) {
     const std::string reply_dir = bot_resource_path("reply");
     fs::create_directories(reply_dir);
     Json::Value res = J;
@@ -384,8 +362,7 @@ Json::Value substitue_image(const Json::Value &J)
     }
     return res;
 }
-Json::Value substitute_Json(const Json::Value &J)
-{
+Json::Value substitute_Json(const Json::Value &J) {
     Json::Value res;
     for (const Json::Value &item : J) {
         Json::Value parsed;
@@ -401,8 +378,7 @@ Json::Value substitute_Json(const Json::Value &J)
 }
 
 std::string Responder::get_reply_message(const std::string &message,
-                                         const msg_meta &conf)
-{
+                                         const msg_meta &conf) {
     std::string res;
     if (message.find("[CQ:forward") != std::string::npos) {
         Json::Value J;
@@ -412,22 +388,19 @@ std::string Responder::get_reply_message(const std::string &message,
             J = J["data"];
             J["messages"] = substitute_Json(J["messages"]);
             return "[fwd]" + J.toStyledString();
-        }
-        else {
+        } else {
             conf.p->setlog(LOG::ERROR, "Failed to get forward message: " +
                                            J.toStyledString());
             conf.p->cq_send("获取转发消息失败", conf);
             return "";
         }
-    }
-    else {
+    } else {
         res = message;
         return substitute_image(res);
     }
 }
 
-void Responder::set_backup_files(archivist *p, const std::string &name)
-{
+void Responder::set_backup_files(archivist *p, const std::string &name) {
     p->add_path(name, bot_resource_path("reply") + "/", "resource/reply/");
 }
 

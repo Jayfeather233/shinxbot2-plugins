@@ -10,8 +10,7 @@ static std::string imgfun_help_msg =
     "order为可选，axis指定x/y轴，order指定翻转哪边\n旋转 fps=[24] order=[0|1] "
     "@或图片。\n万花筒 num=[3~12] @或图片。";
 
-void img_fun::process(std::string message, const msg_meta &conf)
-{
+void img_fun::process(std::string message, const msg_meta &conf) {
     BarInfo p(0, "图片处理初始化");
     conf.p->registerBar(&p);
     if (cmd_match_exact(message, {"img_fun.help"})) {
@@ -134,11 +133,9 @@ void img_fun::process(std::string message, const msg_meta &conf)
     std::wstring payload = wmessage;
     if (parse_command(wmessage, proc_type, payload)) {
         wmessage = trim(payload);
-    }
-    else if ((it = is_input.find(conf.user_id)) != is_input.end()) {
+    } else if ((it = is_input.find(conf.user_id)) != is_input.end()) {
         proc_type = is_input[conf.user_id];
-    }
-    else {
+    } else {
         // ?
         return;
     }
@@ -149,8 +146,7 @@ void img_fun::process(std::string message, const msg_meta &conf)
         fileurl =
             "http://q1.qlogo.cn/g?b=qq&nk=" + std::to_string(userid) + "&s=160";
         filename = "qq" + std::to_string(userid);
-    }
-    else if (wmessage.find(L"[CQ:image") != wmessage.npos) {
+    } else if (wmessage.find(L"[CQ:image") != wmessage.npos) {
         std::time_t nt = std::chrono::system_clock::to_time_t(
             std::chrono::system_clock::now());
         tm tt = *localtime(&nt);
@@ -169,12 +165,10 @@ void img_fun::process(std::string message, const msg_meta &conf)
                 break;
             }
         }
-    }
-    else {
+    } else {
         if (it != is_input.end()) {
             is_input.erase(it);
-        }
-        else {
+        } else {
             conf.p->cq_send("图来", conf);
             is_input[conf.user_id] = proc_type;
         }
@@ -195,8 +189,7 @@ void img_fun::process(std::string message, const msg_meta &conf)
     bool mgif = false;
     try {
         img.read(filepath);
-    }
-    catch (...) {
+    } catch (...) {
         mgif = true;
     }
     if (img.animationDelay() || proc_type.type == img_fun_type::ROTATE ||
@@ -209,29 +202,27 @@ void img_fun::process(std::string message, const msg_meta &conf)
             mirrorImage(
                 img_list, proc_type.para1, proc_type.para2,
                 [&](float delta_p) { p.setProgress(prog += delta_p * 0.7); });
-        }
-        else if (proc_type.type == img_fun_type::ROTATE) {
+        } else if (proc_type.type == img_fun_type::ROTATE) {
             filename += "_rot.gif";
             float prog = 0.2;
-            conf.p->setlog(
-                LOG::INFO,
-                fmt::format("img_fun into rot, img_list.size()={}, "
-                            "animationDelay={}, mgif={}",
-                            img_list.size(), img.animationDelay(), mgif));
+            conf.p->setlog(LOG::INFO,
+                           fmt::format("img_fun into rot, img_list.size()={}, "
+                                       "animationDelay={}, mgif={}",
+                                       img_list.size(), img.animationDelay(),
+                                       mgif));
             if (img.animationDelay() || mgif || img_list.size() > 1) {
-                conf.p->setlog(
-                    LOG::INFO,
-                    fmt::format("img_fun into rot gif"));
-                rotateImage(
-                    img_list, proc_type.para1, proc_type.para2,
-                    [&](float delta_p) { p.setProgress(prog += delta_p * 0.7); });
+                conf.p->setlog(LOG::INFO, fmt::format("img_fun into rot gif"));
+                rotateImage(img_list, proc_type.para1, proc_type.para2,
+                            [&](float delta_p) {
+                                p.setProgress(prog += delta_p * 0.7);
+                            });
             } else {
-                img_list = rotateImage(
-                    img, proc_type.para1, proc_type.para2,
-                    [&](float delta_p) { p.setProgress(prog += delta_p * 0.7); });
+                img_list = rotateImage(img, proc_type.para1, proc_type.para2,
+                                       [&](float delta_p) {
+                                           p.setProgress(prog += delta_p * 0.7);
+                                       });
             }
-        }
-        else if (proc_type.type == img_fun_type::KALEIDO) {
+        } else if (proc_type.type == img_fun_type::KALEIDO) {
             filename += "_kal.gif";
             float prog = 0.2;
             kaleido(
@@ -242,13 +233,11 @@ void img_fun::process(std::string message, const msg_meta &conf)
         Magick::writeImages(img_list.begin(), img_list.end(),
                             download_dir + "/" + filename);
         p.setBar(0.9, "图片处理完成，发送中");
-    }
-    else {
+    } else {
         if (proc_type.type == img_fun_type::MIRROR) {
             filename += "_mir.png";
             mirrorImage(img, proc_type.para1, proc_type.para2);
-        }
-        else if (proc_type.type == img_fun_type::KALEIDO) {
+        } else if (proc_type.type == img_fun_type::KALEIDO) {
             filename += "_kal.png";
             float prog = 0.2;
             kaleido(img, proc_type.para1, proc_type.para2, [&](float delta_p) {
@@ -269,8 +258,7 @@ void img_fun::process(std::string message, const msg_meta &conf)
                                           conf.user_id, conf.group_id));
     return;
 }
-bool img_fun::check(std::string message, const msg_meta &conf)
-{
+bool img_fun::check(std::string message, const msg_meta &conf) {
     std::wstring wmes = string_to_wstring(message);
     return message == "img_fun.help" || starts_with(wmes, L"对称 ") ||
            wmes == L"对称" || starts_with(wmes, L"旋转 ") || wmes == L"旋转" ||

@@ -1,8 +1,7 @@
 #include "recall.h"
 #include "utils.h"
 
-void recall::process(std::string message, const msg_meta &conf)
-{
+void recall::process(std::string message, const msg_meta &conf) {
     size_t pos = message.find("[CQ:reply,id=");
     pos += 13;
     int64_t fn = 1, cnt = 0;
@@ -20,8 +19,7 @@ void recall::process(std::string message, const msg_meta &conf)
     conf.p->cq_send("delete_msg", J);
     conf.p->setlog(LOG::INFO, fmt::format("recall msg by {}", conf.user_id));
 }
-bool recall::check(std::string message, const msg_meta &conf)
-{
+bool recall::check(std::string message, const msg_meta &conf) {
     return (message.find("[CQ:reply,id=") != message.npos &&
             message.find("recall") != message.npos);
 }

@@ -10,8 +10,7 @@ typedef struct Player {
     userid_t nex_id;
     std::string word;
     bool alive;
-    Player(userid_t user_id)
-    {
+    Player(userid_t user_id) {
         id = user_id;
         pre_id = 0;
         nex_id = 0;

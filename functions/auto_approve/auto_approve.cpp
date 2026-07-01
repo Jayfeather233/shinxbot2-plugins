@@ -6,14 +6,12 @@ namespace {
 const std::string AUTO_APPROVE_CONFIG_FILE =
     bot_config_path(nullptr, "features/auto_approve/auto_approve.json");
 
-bool is_approve_command(const std::string &m)
-{
+bool is_approve_command(const std::string &m) {
     return cmd_match_exact(m, {"approve", "approve.help", "approve.status"}) ||
            cmd_match_prefix(m, {"approve.friend", "approve.invite"});
 }
 
-std::string approve_usage()
-{
+std::string approve_usage() {
     return "Approve controls (OP only):\n"
            "approve.help\n"
            "approve.status\n"
@@ -24,8 +22,7 @@ std::string approve_usage()
 
 auto_approve::auto_approve() { load_config(); }
 
-void auto_approve::load_config()
-{
+void auto_approve::load_config() {
     Json::Value cfg = string_to_json(readfile(AUTO_APPROVE_CONFIG_FILE, "{}"));
     if (!cfg.isObject()) {
         auto_friend_ = true;
@@ -40,16 +37,14 @@ void auto_approve::load_config()
                              : true;
 }
 
-void auto_approve::save_config() const
-{
+void auto_approve::save_config() const {
     Json::Value cfg(Json::objectValue);
     cfg["auto_friend"] = auto_friend_;
     cfg["auto_group_invite"] = auto_group_invite_;
     writefile(AUTO_APPROVE_CONFIG_FILE, cfg.toStyledString());
 }
 
-bool auto_approve::parse_switch_value(const std::string &value, bool &state)
-{
+bool auto_approve::parse_switch_value(const std::string &value, bool &state) {
     std::string v = trim(value);
     if (v == "on" || v == "true" || v == "1") {
         state = true;
@@ -62,13 +57,11 @@ bool auto_approve::parse_switch_value(const std::string &value, bool &state)
     return false;
 }
 
-std::string auto_approve::state_to_text(bool state) const
-{
+std::string auto_approve::state_to_text(bool state) const {
     return state ? "on" : "off";
 }
 
-void auto_approve::process(std::string message, const msg_meta &conf)
-{
+void auto_approve::process(std::string message, const msg_meta &conf) {
     std::unique_lock<std::mutex> lock(mutex_);
     std::string m = trim(message);
 
@@ -182,8 +175,7 @@ void auto_approve::process(std::string message, const msg_meta &conf)
     conf.p->cq_send(approve_usage(), conf);
 }
 
-bool auto_approve::check(std::string message, const msg_meta &conf)
-{
+bool auto_approve::check(std::string message, const msg_meta &conf) {
     std::string m = trim(message);
     if (conf.message_type == "internal") {
         (void)m;
@@ -193,8 +185,7 @@ bool auto_approve::check(std::string message, const msg_meta &conf)
     return is_approve_command(m);
 }
 
-bool auto_approve::reload(const msg_meta &conf)
-{
+bool auto_approve::reload(const msg_meta &conf) {
     (void)conf;
     std::unique_lock<std::mutex> lock(mutex_);
     load_config();
@@ -203,8 +194,7 @@ bool auto_approve::reload(const msg_meta &conf)
 
 std::string auto_approve::help() { return ""; }
 
-std::string auto_approve::help(const msg_meta &conf, help_level_t level)
-{
+std::string auto_approve::help(const msg_meta &conf, help_level_t level) {
     if (level != help_level_t::bot_admin || conf.message_type != "private" ||
         !conf.p->is_op(conf.user_id)) {
         return "";

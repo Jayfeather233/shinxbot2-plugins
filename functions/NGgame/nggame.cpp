@@ -6,21 +6,18 @@
 static std::map<groupid_t, NGGame> games;
 static std::unordered_map<userid_t, groupid_t> init_group_by_user;
 
-static void clear_init_index_for_group(groupid_t group_id)
-{
+static void clear_init_index_for_group(groupid_t group_id) {
     for (auto it = init_group_by_user.begin();
          it != init_group_by_user.end();) {
         if (it->second == group_id) {
             it = init_group_by_user.erase(it);
-        }
-        else {
+        } else {
             ++it;
         }
     }
 }
 
-static void rebuild_init_index_for_group(groupid_t group_id, NGGame &game)
-{
+static void rebuild_init_index_for_group(groupid_t group_id, NGGame &game) {
     clear_init_index_for_group(group_id);
     if (game.get_state() != gameState::init) {
         return;
@@ -31,8 +28,7 @@ static void rebuild_init_index_for_group(groupid_t group_id, NGGame &game)
 }
 
 static void ng_react_or_reply(const msg_meta &conf, const std::string &emoji_id,
-                              const std::string &fallback_text)
-{
+                              const std::string &fallback_text) {
     bool ok = false;
     try {
         Json::Value j;
@@ -41,8 +37,7 @@ static void ng_react_or_reply(const msg_meta &conf, const std::string &emoji_id,
         Json::Value r =
             string_to_json(conf.p->cq_send("set_msg_emoji_like", j));
         ok = r["status"].asString() == "ok";
-    }
-    catch (...) {
+    } catch (...) {
     }
 
     if (!ok && !fallback_text.empty()) {
@@ -52,8 +47,7 @@ static void ng_react_or_reply(const msg_meta &conf, const std::string &emoji_id,
     }
 }
 
-static std::string ng_detail_help()
-{
+static std::string ng_detail_help() {
     return "NG 游戏：\n"
            "*ng.help - 查看帮助\n"
            "*ng create - 创建房间\n"
@@ -66,14 +60,12 @@ static std::string ng_detail_help()
 }
 
 void send_msg_ng(bot *p, groupid_t group_id, userid_t user_id,
-                 const std::string &content)
-{
+                 const std::string &content) {
     msg_meta rep(group_id ? "group" : "private", user_id, group_id, 0, p);
     p->cq_send(content, rep);
 }
 
-static userid_t extract_first_at(const std::string &cq)
-{
+static userid_t extract_first_at(const std::string &cq) {
     size_t at_pos = cq.find("[CQ:at,");
     if (at_pos == std::string::npos) {
         return 0;
@@ -85,8 +77,7 @@ static userid_t extract_first_at(const std::string &cq)
     return extract_qq_from_at_segment(cq.substr(at_pos, at_end - at_pos + 1));
 }
 
-static std::string expand_at(std::string raw, const msg_meta &conf)
-{
+static std::string expand_at(std::string raw, const msg_meta &conf) {
     std::string res = raw;
     size_t search_pos = 0;
     while (true) {
@@ -106,16 +97,14 @@ static std::string expand_at(std::string raw, const msg_meta &conf)
                 "@" + get_username(conf.p, qq, conf.group_id);
             res.replace(at_pos, at_end - at_pos + 1, replacement);
             search_pos = at_pos + replacement.size();
-        }
-        else {
+        } else {
             search_pos = at_end + 1;
         }
     }
     return res;
 }
 
-bool NGGame::join(userid_t user_id)
-{
+bool NGGame::join(userid_t user_id) {
     if (ng.find(user_id) != ng.end()) {
         return false;
     }
@@ -123,8 +112,7 @@ bool NGGame::join(userid_t user_id)
     return true;
 }
 
-bool NGGame::set(userid_t user_id, std::string word)
-{
+bool NGGame::set(userid_t user_id, std::string word) {
     auto it = ng.find(user_id);
     if (it == ng.end()) {
         return false;
@@ -133,8 +121,7 @@ bool NGGame::set(userid_t user_id, std::string word)
     return true;
 }
 
-bool NGGame::lose(userid_t user_id)
-{
+bool NGGame::lose(userid_t user_id) {
     auto it = ng.find(user_id);
     if (it == ng.end() || !it->second.alive) {
         return false;
@@ -143,8 +130,7 @@ bool NGGame::lose(userid_t user_id)
     return true;
 }
 
-bool NGGame::quit(userid_t user_id)
-{
+bool NGGame::quit(userid_t user_id) {
     auto it = ng.find(user_id);
     if (it == ng.end()) {
         return false;
@@ -171,8 +157,7 @@ void NGGame::set_state(gameState next_state) { state = next_state; }
 
 gameState NGGame::get_state() { return state; }
 
-void NGGame::link()
-{
+void NGGame::link() {
     std::vector<userid_t> player_list;
     player_list.reserve(ng.size());
     for (const auto &it : ng) {
@@ -190,21 +175,18 @@ void NGGame::link()
     }
 }
 
-void NGGame::abort()
-{
+void NGGame::abort() {
     state = gameState::idle;
     ng.clear();
 }
 
-void NGGame::send_list(const msg_meta &conf)
-{
+void NGGame::send_list(const msg_meta &conf) {
     for (const auto &it : ng) {
         send_msg_ng(conf.p, 0, it.first, get_info(it.first, conf));
     }
 }
 
-void NGGame::send_vic(const msg_meta &conf)
-{
+void NGGame::send_vic(const msg_meta &conf) {
     for (const auto &it : ng) {
         userid_t vic = get_vic(it.first);
         if (!vic) {
@@ -215,8 +197,7 @@ void NGGame::send_vic(const msg_meta &conf)
     }
 }
 
-std::string NGGame::get_ng(userid_t user_id)
-{
+std::string NGGame::get_ng(userid_t user_id) {
     auto it = ng.find(user_id);
     if (it == ng.end()) {
         return "";
@@ -224,8 +205,7 @@ std::string NGGame::get_ng(userid_t user_id)
     return it->second.word;
 }
 
-userid_t NGGame::get_vic(userid_t user_id)
-{
+userid_t NGGame::get_vic(userid_t user_id) {
     auto it = ng.find(user_id);
     if (it == ng.end()) {
         return 0;
@@ -236,8 +216,7 @@ userid_t NGGame::get_vic(userid_t user_id)
     return it->second.nex_id;
 }
 
-userid_t NGGame::get_winner()
-{
+userid_t NGGame::get_winner() {
     if (state != gameState::work) {
         return 0;
     }
@@ -249,15 +228,13 @@ userid_t NGGame::get_winner()
     return 0;
 }
 
-std::string NGGame::overall(const msg_meta &conf)
-{
+std::string NGGame::overall(const msg_meta &conf) {
     std::string content;
     for (const auto &it : ng) {
         if (is_alive(it.first)) {
             content +=
                 get_username(conf.p, it.first, conf.group_id) + ": alive\n";
-        }
-        else {
+        } else {
             content += get_username(conf.p, it.first, conf.group_id) + " -> " +
                        get_ng(it.first) + "\n";
         }
@@ -268,8 +245,7 @@ std::string NGGame::overall(const msg_meta &conf)
     return content;
 }
 
-std::string NGGame::get_info(userid_t user_id, const msg_meta &conf)
-{
+std::string NGGame::get_info(userid_t user_id, const msg_meta &conf) {
     std::string content;
     for (const auto &it : ng) {
         if (it.first != user_id) {
@@ -283,8 +259,7 @@ std::string NGGame::get_info(userid_t user_id, const msg_meta &conf)
     return content;
 }
 
-std::vector<userid_t> NGGame::get_lazy()
-{
+std::vector<userid_t> NGGame::get_lazy() {
     std::vector<userid_t> lazy;
     for (const auto &it : ng) {
         if (it.second.word.empty() && it.second.pre_id != 0) {
@@ -294,8 +269,7 @@ std::vector<userid_t> NGGame::get_lazy()
     return lazy;
 }
 
-std::vector<userid_t> NGGame::get_players()
-{
+std::vector<userid_t> NGGame::get_players() {
     std::vector<userid_t> players;
     players.reserve(ng.size());
     for (const auto &it : ng) {
@@ -304,8 +278,7 @@ std::vector<userid_t> NGGame::get_players()
     return players;
 }
 
-size_t NGGame::ready_cnt()
-{
+size_t NGGame::ready_cnt() {
     size_t cnt = 0;
     for (const auto &it : ng) {
         if (!it.second.word.empty()) {
@@ -315,14 +288,12 @@ size_t NGGame::ready_cnt()
     return cnt;
 }
 
-bool NGGame::is_alive(userid_t user_id)
-{
+bool NGGame::is_alive(userid_t user_id) {
     auto it = ng.find(user_id);
     return it != ng.end() && it->second.alive;
 }
 
-bool NGGame::check_ng(std::string content, userid_t user_id)
-{
+bool NGGame::check_ng(std::string content, userid_t user_id) {
     auto it = ng.find(user_id);
     if (state != gameState::work || it == ng.end() || !it->second.alive ||
         it->second.word.empty()) {
@@ -331,13 +302,11 @@ bool NGGame::check_ng(std::string content, userid_t user_id)
     return content.find(it->second.word) != std::string::npos;
 }
 
-bool NGGame::check_end()
-{
+bool NGGame::check_end() {
     return state == gameState::work && alive_cnt() <= 1;
 }
 
-size_t NGGame::alive_cnt()
-{
+size_t NGGame::alive_cnt() {
     size_t cnt = 0;
     for (const auto &it : ng) {
         if (it.second.alive) {
@@ -351,8 +320,7 @@ size_t NGGame::total_cnt() { return ng.size(); }
 
 size_t NGGame::dead_cnt() { return total_cnt() - alive_cnt(); }
 
-bool NGgame::check(std::string message, const msg_meta &conf)
-{
+bool NGgame::check(std::string message, const msg_meta &conf) {
     if (conf.message_type == "group") {
         std::string normalized = trim(message);
         if (cmd_match_exact(normalized, {"*ng"}) ||
@@ -383,8 +351,7 @@ bool NGgame::check(std::string message, const msg_meta &conf)
     return false;
 }
 
-void NGgame::process(std::string message, const msg_meta &conf)
-{
+void NGgame::process(std::string message, const msg_meta &conf) {
     auto uid = conf.user_id;
     auto gid = conf.group_id;
 
@@ -401,12 +368,10 @@ void NGgame::process(std::string message, const msg_meta &conf)
             if (normalized == "*ng") {
                 is_ng_command = true;
                 cmd.clear();
-            }
-            else if (cmd_strip_prefix(normalized, "*ng ", body)) {
+            } else if (cmd_strip_prefix(normalized, "*ng ", body)) {
                 is_ng_command = true;
                 cmd = body;
-            }
-            else if (cmd_strip_prefix(normalized, "*ng.", body)) {
+            } else if (cmd_strip_prefix(normalized, "*ng.", body)) {
                 is_ng_command = true;
                 cmd = body;
             }
@@ -430,8 +395,7 @@ void NGgame::process(std::string message, const msg_meta &conf)
                                 display_name_in_group(conf, uid) + "！");
                 clear_init_index_for_group(gid);
                 game->abort();
-            }
-            else {
+            } else {
                 ng_react_or_reply(conf, "12951", "自检失败");
                 send_msg_ng(conf.p, gid, 0,
                             "很遗憾，你的 NG 词是 " + game->get_ng(uid) +
@@ -535,8 +499,7 @@ void NGgame::process(std::string message, const msg_meta &conf)
                 if (!content.empty()) {
                     content.pop_back();
                     content += " 还没有设置 NG 词";
-                }
-                else {
+                } else {
                     content = "仍有玩家未设置 NG 词。";
                 }
                 send_msg_ng(conf.p, gid, 0, content);
@@ -706,9 +669,6 @@ void NGgame::process(std::string message, const msg_meta &conf)
     }
 }
 
-std::string NGgame::help()
-{
-    return "NG 游戏：不要说挑战。帮助：*ng.help";
-}
+std::string NGgame::help() { return "NG 游戏：不要说挑战。帮助：*ng.help"; }
 
 DECLARE_FACTORY_FUNCTIONS(NGgame)

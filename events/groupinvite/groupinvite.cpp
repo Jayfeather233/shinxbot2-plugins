@@ -1,8 +1,7 @@
 #include "groupinvite.h"
 #include "internal_message.hpp"
 
-void groupinvite::process(bot *p, Json::Value J)
-{
+void groupinvite::process(bot *p, Json::Value J) {
     if (!J.isMember("flag")) {
         return;
     }
@@ -15,8 +14,7 @@ void groupinvite::process(bot *p, Json::Value J)
     p->input_process(w.toStyledString());
 }
 
-bool groupinvite::check(bot *p, Json::Value J)
-{
+bool groupinvite::check(bot *p, Json::Value J) {
     (void)p;
     return J.isMember("post_type") && J.isMember("request_type") &&
            J.isMember("sub_type") && J.isMember("flag") &&

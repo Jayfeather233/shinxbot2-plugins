@@ -4,8 +4,7 @@
 
 #include <iostream>
 
-void AnimeImg::process(std::string message, const msg_meta &conf)
-{
+void AnimeImg::process(std::string message, const msg_meta &conf) {
     Json::Value J;
     J["message_id"] = conf.message_id;
     conf.p->cq_send("mark_msg_as_read", J);
@@ -17,16 +16,14 @@ void AnimeImg::process(std::string message, const msg_meta &conf)
                                       std::to_string(conf.user_id));
         conf.p->cq_send(
             "[CQ:image,file=" + J["imgurl"].asString() + ",id=40000]", conf);
-    }
-    catch (...) {
+    } catch (...) {
         conf.p->cq_send("dmoe网站链接有问题", conf);
         conf.p->setlog(LOG::WARNING, "Auto2DAnimateImg at group " +
                                          std::to_string(conf.group_id) +
                                          " Connect error");
     }
 }
-bool AnimeImg::check(std::string message, const msg_meta &conf)
-{
+bool AnimeImg::check(std::string message, const msg_meta &conf) {
     (void)conf;
     return cmd_match_exact(message, {"来点二次元"});
 }

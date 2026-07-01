@@ -20,8 +20,7 @@ static std::string help_message =
 // todo: 美图 加入默认 gid name - 将图集变成默认图集
 img::img() { load_config(); }
 
-void img::load_config()
-{
+void img::load_config() {
     default_image_list.clear();
     image_size.clear();
     image_list.clear();
@@ -52,8 +51,7 @@ void img::load_config()
 static std::mutex img_mutex;
 static std::mutex save_mutex;
 
-static bool is_uint64_token(const std::string &s)
-{
+static bool is_uint64_token(const std::string &s) {
     if (s.empty()) {
         return false;
     }
@@ -63,8 +61,7 @@ static bool is_uint64_token(const std::string &s)
 
 static bool parse_private_img_request(const std::string &message,
                                       std::string &name, groupid_t &groupid,
-                                      std::string &index)
-{
+                                      std::string &index) {
     std::istringstream iss(trim(message));
     std::string gid_token;
     if (!(iss >> name) || !(iss >> gid_token)) {
@@ -81,8 +78,7 @@ static bool parse_private_img_request(const std::string &message,
     return !name.empty();
 }
 
-void img::save()
-{
+void img::save() {
     std::lock_guard<std::mutex> lock_guard(save_mutex);
     Json::Value J;
     J["default_images"] = Json::Value(Json::arrayValue);
@@ -120,8 +116,7 @@ void img::save()
 }
 
 void img::add_images(const std::wstring &message, const std::string &name,
-                     const groupid_t &groupid, const msg_meta &conf)
-{
+                     const groupid_t &groupid, const msg_meta &conf) {
     std::lock_guard<std::mutex> lock_guard(img_mutex);
     std::string uuid;
     const auto &uuids = uuid_groupid.get_by_second(groupid); // 此群内的图集
@@ -171,35 +166,30 @@ void img::add_images(const std::wstring &message, const std::string &name,
     if (count > 1) {
         conf.p->cq_send("已加入 " + std::to_string(count) + " 张至 " + name,
                         conf);
-    }
-    else {
+    } else {
         conf.p->cq_send("已加入 " + name, conf);
     }
 }
 
-bool is_in_group(groupid_t gid, userid_t uid, const bot *p)
-{
+bool is_in_group(groupid_t gid, userid_t uid, const bot *p) {
     Json::Value J = Json::Value(Json::objectValue);
     J["group_id"] = gid;
     J["user_id"] = uid;
     J = string_to_json(p->cq_send("get_group_member_info", J));
     if (J["retcode"].asInt() != 0) {
         return false;
-    }
-    else {
+    } else {
         return true;
     }
 }
 
 bool img::process_add_images(const std::wstring &msg, const std::string &name,
-                             const groupid_t &groupid, const msg_meta &conf)
-{
+                             const groupid_t &groupid, const msg_meta &conf) {
     std::string name2;
     size_t pos = name.find("[CQ:");
     if (pos != std::string::npos) {
         name2 = name.substr(0, pos);
-    }
-    else {
+    } else {
         name2 = name;
     }
     if (name2.empty()) {
@@ -225,8 +215,7 @@ bool img::process_add_images(const std::wstring &msg, const std::string &name,
 }
 
 void img::del_images(const std::wstring &name, const groupid_t &groupid,
-                     const std::string &index, const msg_meta &conf)
-{
+                     const std::string &index, const msg_meta &conf) {
     std::lock_guard<std::mutex> lock_guard(img_mutex);
     std::string uuid;
     const auto &uuids = uuid_groupid.get_by_second(groupid); // 此群内的图集
@@ -258,8 +247,7 @@ void img::del_images(const std::wstring &name, const groupid_t &groupid,
         conf.p->cq_send(
             fmt::format("已删除全部 {} 图片", wstring_to_string(name)), conf);
         return;
-    }
-    else if (index.empty()) {
+    } else if (index.empty()) {
         conf.p->cq_send("请提供要删除的图片索引，或使用'all'删除全部图片",
                         conf);
         return;
@@ -268,8 +256,7 @@ void img::del_images(const std::wstring &name, const groupid_t &groupid,
     try {
         index_num = std::stoi(index);
         index_num -= 1; // 用户从1开始计数
-    }
-    catch (...) {
+    } catch (...) {
         conf.p->cq_send("索引无效", conf);
         return;
     }
@@ -315,8 +302,7 @@ void img::del_images(const std::wstring &name, const groupid_t &groupid,
 }
 
 bool img::process_del_images(const std::wstring &name, const groupid_t &groupid,
-                             const std::string &index, const msg_meta &conf)
-{
+                             const std::string &index, const msg_meta &conf) {
     if (name.empty()) {
         conf.p->cq_send("名称不能为空", conf);
         return true;
@@ -342,8 +328,7 @@ bool img::process_del_images(const std::wstring &name, const groupid_t &groupid,
 /**
  * Return true if processed a command, and skip normal processing.
  */
-bool img::process_command(const std::string &message, const msg_meta &conf)
-{
+bool img::process_command(const std::string &message, const msg_meta &conf) {
     std::wstring wmessage = string_to_wstring(message);
 
     struct exact_rule {
@@ -549,8 +534,7 @@ bool img::process_command(const std::string &message, const msg_meta &conf)
     return false;
 }
 
-void img::process(std::string message, const msg_meta &conf)
-{
+void img::process(std::string message, const msg_meta &conf) {
     std::wstring wmessage = string_to_wstring(message);
     if (cmd_match_prefix(wmessage, {L"美图 "})) {
         if (process_command(message, conf)) {
@@ -585,8 +569,7 @@ void img::process(std::string message, const msg_meta &conf)
         if (!is_in_group(groupid, conf.user_id, conf.p)) {
             return;
         }
-    }
-    else {
+    } else {
         std::istringstream iss(message);
         if (!(iss >> name)) {
             return;
@@ -618,15 +601,12 @@ void img::process(std::string message, const msg_meta &conf)
     if (it_group != uuids.end() && it_default != default_image_list.end()) {
         img_size1 = image_size[*it_group];
         img_size = image_size[*it_group] + image_size[*it_default];
-    }
-    else if (it_group != uuids.end()) {
+    } else if (it_group != uuids.end()) {
         img_size1 = image_size[*it_group];
         img_size = image_size[*it_group];
-    }
-    else if (it_default != default_image_list.end()) {
+    } else if (it_default != default_image_list.end()) {
         img_size = image_size[*it_default];
-    }
-    else {
+    } else {
         return;
     }
     // fmt::print("img size: {}, {}, {}\n", img_size, img_size1, img_size2);
@@ -648,8 +628,7 @@ void img::process(std::string message, const msg_meta &conf)
                     << "/resource/mt/" << *it_group << "/" << i << ",id=40000]"
                     << std::endl;
                 continue;
-            }
-            else {
+            } else {
                 oss << std::to_string(conf.p->get_botqq())
                     << " [CQ:image,file=file://" << get_local_path()
                     << "/resource/mt/" << *it_default << "/" << i - img_size1
@@ -672,12 +651,10 @@ void img::process(std::string message, const msg_meta &conf)
     int64_t index;
     if (indexs.length() < 1) {
         index = get_random(img_size) + 1;
-    }
-    else {
+    } else {
         try {
             index = std::stoi(indexs);
-        }
-        catch (...) {
+        } catch (...) {
             return;
         }
         if (index == 0) {
@@ -699,8 +676,7 @@ void img::process(std::string message, const msg_meta &conf)
                     .string() +
                 ",id=40000]",
             conf);
-    }
-    else {
+    } else {
         const auto default_idx = std::to_string(index - img_size1);
         conf.p->cq_send("[CQ:image,file=file://" +
                             fs::absolute(fs::path(bot_resource_path(
@@ -712,8 +688,7 @@ void img::process(std::string message, const msg_meta &conf)
     }
 }
 
-bool img::check(std::string message, const msg_meta &conf)
-{
+bool img::check(std::string message, const msg_meta &conf) {
     if (std::get<0>(is_adding[conf.user_id]) ||
         std::get<0>(is_deling[conf.user_id])) {
         return true;
@@ -734,8 +709,7 @@ bool img::check(std::string message, const msg_meta &conf)
     return true;
 }
 
-bool img::reload(const msg_meta &conf)
-{
+bool img::reload(const msg_meta &conf) {
     (void)conf;
     std::lock_guard<std::mutex> lock_guard(img_mutex);
     is_adding.clear();
@@ -746,8 +720,7 @@ bool img::reload(const msg_meta &conf)
 
 std::string img::help() { return "美图： 美图 帮助 - 列出所有美图命令"; }
 
-void img::set_backup_files(archivist *p, const std::string &name)
-{
+void img::set_backup_files(archivist *p, const std::string &name) {
     p->add_path(name, bot_resource_path(nullptr, "mt") + "/", "resource/mt/");
 }
 

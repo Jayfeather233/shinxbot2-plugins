@@ -7,7 +7,9 @@ typedef std::pair<std::string, size_t> bv_result;
 
 class bili_decode : public processable {
 private:
-    std::map<groupid_t, std::pair<std::string, std::chrono::steady_clock::time_point>> group_last_decode; // 上次输出的code和时间戳
+    std::map<groupid_t,
+             std::pair<std::string, std::chrono::steady_clock::time_point>>
+        group_last_decode; // 上次输出的code和时间戳
     Json::Value get_raw_info(uint64_t aid);
     Json::Value get_raw_info(std::string bvid);
     std::string get_decode_info(const Json::Value &raw_info);

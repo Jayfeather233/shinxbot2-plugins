@@ -2,8 +2,7 @@
 #include "internal_message.hpp"
 #include "utils.h"
 
-void m_change::process(bot *p, Json::Value J)
-{
+void m_change::process(bot *p, Json::Value J) {
     std::string name =
         get_username(p, J["user_id"].asUInt64(), J["group_id"].asUInt64());
     std::ostringstream oss;
@@ -34,8 +33,7 @@ void m_change::process(bot *p, Json::Value J)
                       std::to_string(J["group_id"].asUInt64()) + " by " +
                       std::to_string(J["user_id"].asUInt64()) + " op " +
                       std::to_string(J["operator_id"].asUInt64()));
-    }
-    else if (J["notice_type"].asString() == "group_increase") {
+    } else if (J["notice_type"].asString() == "group_increase") {
         // p->cq_send((std::string) "欢迎" + name1 + "的加入",
         //            (msg_meta){"group", 0, J["group_id"].asUInt64(), 0});
         Json::Value w = internal_message::make(
@@ -50,8 +48,7 @@ void m_change::process(bot *p, Json::Value J)
                                  std::to_string(J["user_id"].asUInt64()));
     }
 }
-bool m_change::check(bot *p, Json::Value J)
-{
+bool m_change::check(bot *p, Json::Value J) {
     if (J["post_type"] != "notice")
         return false;
     return J["notice_type"].asString() == "group_decrease" ||

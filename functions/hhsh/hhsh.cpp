@@ -4,8 +4,7 @@
 #include <iostream>
 #include <jsoncpp/json/json.h>
 
-void hhsh::process(std::string message, const msg_meta &conf)
-{
+void hhsh::process(std::string message, const msg_meta &conf) {
     Json::Value J;
     J["message_id"] = conf.message_id;
     conf.p->cq_send("mark_msg_as_read", J);
@@ -22,8 +21,7 @@ void hhsh::process(std::string message, const msg_meta &conf)
     try {
         Ja = string_to_json(do_post("https://lab.magiconch.com",
                                     "/api/nbnhhsh/guess", false, J, {}, false));
-    }
-    catch (...) {
+    } catch (...) {
         conf.p->setlog(LOG::WARNING, "failed to connect to hhsh");
         conf.p->cq_send("failed to connect to hhsh", conf);
         return;
@@ -41,8 +39,7 @@ void hhsh::process(std::string message, const msg_meta &conf)
         if (J.isMember("inputting")) {
             if (J["inputting"].size() == 0) {
                 res.append(J["name"].asString()).append("尚未录入");
-            }
-            else {
+            } else {
                 res.append(J["name"].asString()).append("有可能是：\n");
                 Json::Value maybe_value = J["inputting"];
                 Json::ArrayIndex msz = maybe_value.size();
@@ -51,12 +48,10 @@ void hhsh::process(std::string message, const msg_meta &conf)
                     res += ' ';
                 }
             }
-        }
-        else if (J.isMember("trans")) {
+        } else if (J.isMember("trans")) {
             if (J["trans"].isNull()) {
                 res.append(J["name"].asString()).append("未收录");
-            }
-            else {
+            } else {
                 res.append(J["name"].asString()).append("是：\n");
                 // int t = 0;
                 Json::Value maybe_value = J["trans"];
@@ -68,8 +63,7 @@ void hhsh::process(std::string message, const msg_meta &conf)
                     // if(t >= 10) break;
                 }
             }
-        }
-        else {
+        } else {
             res.append(J["name"].asString()).append("未收录");
         }
     }
@@ -78,8 +72,7 @@ void hhsh::process(std::string message, const msg_meta &conf)
                                   std::to_string(conf.user_id));
     conf.p->cq_send(res, conf);
 }
-bool hhsh::check(std::string message, const msg_meta &conf)
-{
+bool hhsh::check(std::string message, const msg_meta &conf) {
     (void)conf;
     return cmd_match_prefix(message, {"hhsh "});
 }

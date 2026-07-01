@@ -7,8 +7,7 @@
 static std::string config_path =
     bot_config_path(nullptr, "features/randomReply/randomReply.json");
 
-RP::RP()
-{
+RP::RP() {
     Json::Value Ja = string_to_json(readfile(config_path, "[]"));
     for (const auto &J : Ja) {
         reply_content.emplace(
@@ -17,8 +16,7 @@ RP::RP()
     }
 }
 
-void RP::save()
-{
+void RP::save() {
     Json::Value Ja(Json::arrayValue);
     for (const auto &[user_id, content] : reply_content) {
         Json::Value J;
@@ -30,14 +28,12 @@ void RP::save()
     writefile(config_path, Ja.toStyledString(), false);
 }
 
-bool RP::check(std::string message, const msg_meta &conf)
-{
+bool RP::check(std::string message, const msg_meta &conf) {
     return cmd_match_prefix(message, {"rp."}) ||
            reply_content.find(conf.user_id) != reply_content.end();
 }
 
-bool RP::reload(const msg_meta &conf)
-{
+bool RP::reload(const msg_meta &conf) {
     (void)conf;
     reply_content.clear();
     Json::Value Ja = string_to_json(readfile(config_path, "[]"));
@@ -49,8 +45,7 @@ bool RP::reload(const msg_meta &conf)
     return true;
 }
 
-void RP::process(std::string message, const msg_meta &conf)
-{
+void RP::process(std::string message, const msg_meta &conf) {
     const std::string normalized = trim(message);
     const bool can_manage = is_group_op(conf.p, conf.group_id, conf.user_id) ||
                             conf.p->is_op(conf.user_id);
@@ -133,8 +128,7 @@ void RP::process(std::string message, const msg_meta &conf)
                              user_id, content.first, content.second);
                      }
                  }
-             }
-             else if (conf.p->is_op(conf.user_id)) {
+             } else if (conf.p->is_op(conf.user_id)) {
                  // List all replies (admin access)
                  response = "All configured replies:\n";
                  for (const auto &[user_id, content] : reply_content) {
@@ -142,8 +136,7 @@ void RP::process(std::string message, const msg_meta &conf)
                          "User ID: {} | Probability: {}% | Message: {}\n",
                          user_id, content.first, content.second);
                  }
-             }
-             else {
+             } else {
                  response = "You do not have permission to view this list.";
              }
 
@@ -167,15 +160,13 @@ void RP::process(std::string message, const msg_meta &conf)
     }
 }
 
-std::string RP::help()
-{
+std::string RP::help() {
     return "Automatic Reply Bot:\n"
            "- Replies are triggered automatically when a message is received "
            "from the specified user.";
 }
 
-std::string RP::help(const msg_meta &conf, help_level_t level)
-{
+std::string RP::help(const msg_meta &conf, help_level_t level) {
     if (level == help_level_t::group_admin && conf.message_type == "group" &&
         is_group_op(conf.p, conf.group_id, conf.user_id)) {
         return "Automatic Reply Bot:\n"

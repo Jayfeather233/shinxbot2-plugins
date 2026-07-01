@@ -7,8 +7,7 @@
 #include <sstream>
 
 namespace {
-std::string norm_answer_local(const std::string &s)
-{
+std::string norm_answer_local(const std::string &s) {
     std::wstring w = string_to_wstring(s);
     std::wstring out;
     out.reserve(w.size());
@@ -23,8 +22,7 @@ std::string norm_answer_local(const std::string &s)
 }
 
 void append_unique_answer(std::vector<std::string> &dst,
-                          const std::string &candidate)
-{
+                          const std::string &candidate) {
     const std::string t = trim(candidate);
     if (t.empty()) {
         return;
@@ -41,16 +39,14 @@ void append_unique_answer(std::vector<std::string> &dst,
     dst.push_back(t);
 }
 
-std::string to_lower_ascii(std::string s)
-{
+std::string to_lower_ascii(std::string s) {
     for (char &c : s) {
         c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
     }
     return s;
 }
 
-std::string spaced_mask(const std::string &s)
-{
+std::string spaced_mask(const std::string &s) {
     std::ostringstream oss;
     for (size_t i = 0; i < s.size(); ++i) {
         if (i) {
@@ -62,8 +58,7 @@ std::string spaced_mask(const std::string &s)
 }
 
 void react_or_reply(const msg_meta &conf, const std::string &emoji_id,
-                    const std::string &fallback_text)
-{
+                    const std::string &fallback_text) {
     bool ok = false;
     try {
         Json::Value j;
@@ -72,8 +67,7 @@ void react_or_reply(const msg_meta &conf, const std::string &emoji_id,
         Json::Value r =
             string_to_json(conf.p->cq_send("set_msg_emoji_like", j));
         ok = r["status"].asString() == "ok";
-    }
-    catch (...) {
+    } catch (...) {
     }
 
     if (!ok && !fallback_text.empty()) {
@@ -82,8 +76,7 @@ void react_or_reply(const msg_meta &conf, const std::string &emoji_id,
                         conf);
     }
 }
-std::string guessletter_detail_help()
-{
+std::string guessletter_detail_help() {
     return "蔚蓝开字母\n"
            "*kai.help: 查看本帮助\n"
            "*kai create: 创建房间\n"
@@ -102,22 +95,19 @@ std::string guessletter_detail_help()
            "*kai reveal <row>: 揭露某一题";
 }
 
-bool parse_guessletter_cmd(const std::string &raw, std::string &cmd)
-{
+bool parse_guessletter_cmd(const std::string &raw, std::string &cmd) {
     return cmd_parse_prefixed(raw, {"*kai", "*ba", "*开字母"}, cmd);
 }
 } // namespace
 
 guessletter::guessletter() { load_bank(); }
 
-bool guessletter::is_ascii_alpha_num(char c)
-{
+bool guessletter::is_ascii_alpha_num(char c) {
     unsigned char u = static_cast<unsigned char>(c);
     return std::isalnum(u) != 0;
 }
 
-std::string guessletter::norm_key(const std::string &s)
-{
+std::string guessletter::norm_key(const std::string &s) {
     std::string out;
     out.reserve(s.size());
     for (char c : s) {
@@ -130,8 +120,7 @@ std::string guessletter::norm_key(const std::string &s)
     return out;
 }
 
-std::string guessletter::norm_answer(const std::string &s)
-{
+std::string guessletter::norm_answer(const std::string &s) {
     std::wstring w = string_to_wstring(s);
     std::wstring out;
     out.reserve(w.size());
@@ -146,16 +135,14 @@ std::string guessletter::norm_answer(const std::string &s)
     return wstring_to_string(out);
 }
 
-bool guessletter::load_bank()
-{
+bool guessletter::load_bank() {
     bank_.clear();
     Json::Value root = string_to_json(readfile(bank_path_, "{}"));
     Json::Value arr;
     if (root.isArray()) {
         arr = root;
-    }
-    else if (root.isObject() && root.isMember("entries") &&
-             root["entries"].isArray()) {
+    } else if (root.isObject() && root.isMember("entries") &&
+               root["entries"].isArray()) {
         arr = root["entries"];
     }
     if (!arr.isArray()) {
@@ -190,8 +177,7 @@ bool guessletter::load_bank()
     return !bank_.empty();
 }
 
-bool guessletter::is_admin(const msg_meta &conf) const
-{
+bool guessletter::is_admin(const msg_meta &conf) const {
     if (conf.p->is_op(conf.user_id)) {
         return true;
     }
@@ -202,8 +188,7 @@ bool guessletter::is_admin(const msg_meta &conf) const
 }
 
 guessletter::session &guessletter::get_or_create_session(groupid_t gid,
-                                                         userid_t host)
-{
+                                                         userid_t host) {
     auto it = sessions_.find(gid);
     if (it == sessions_.end()) {
         session s;
@@ -214,15 +199,13 @@ guessletter::session &guessletter::get_or_create_session(groupid_t gid,
     return sessions_[gid];
 }
 
-bool guessletter::in_session(const session &s, userid_t uid) const
-{
+bool guessletter::in_session(const session &s, userid_t uid) const {
     return std::find(s.players.begin(), s.players.end(), uid) !=
            s.players.end();
 }
 
 std::string guessletter::render_question_line(int idx, const question &q,
-                                              const msg_meta &conf) const
-{
+                                              const msg_meta &conf) const {
     std::ostringstream oss;
     oss << idx + 1 << ". " << spaced_mask(q.shown);
     if (q.solved) {
@@ -235,8 +218,7 @@ std::string guessletter::render_question_line(int idx, const question &q,
 }
 
 std::string guessletter::render_board(const session &s,
-                                      const msg_meta &conf) const
-{
+                                      const msg_meta &conf) const {
     std::ostringstream oss;
     oss << "题板(" << s.questions.size() << ")\n";
     oss << "题型: " << s.range
@@ -259,24 +241,21 @@ std::string guessletter::render_board(const session &s,
         oss << "当前轮到: [CQ:at,qq=" << cur << "]（"
             << display_name_in_group(conf, cur) << "）\n";
         oss << render_opened_letters(s);
-    }
-    else if (s.started && s.free_mode) {
+    } else if (s.started && s.free_mode) {
         oss << "自由模式进行中\n";
         oss << render_opened_letters(s);
     }
     return trim(oss.str());
 }
 
-std::string guessletter::render_opened_letters(const session &s) const
-{
+std::string guessletter::render_opened_letters(const session &s) const {
     std::vector<char> letters(s.opened_letters.begin(), s.opened_letters.end());
 
     std::ostringstream oss;
     oss << "当前已开字母: ";
     if (letters.empty()) {
         oss << "（无）";
-    }
-    else {
+    } else {
         for (size_t i = 0; i < letters.size(); ++i) {
             if (i) {
                 oss << ",";
@@ -288,8 +267,7 @@ std::string guessletter::render_opened_letters(const session &s) const
 }
 
 std::string guessletter::render_scoreboard(const session &s,
-                                           const msg_meta &conf) const
-{
+                                           const msg_meta &conf) const {
     std::vector<std::pair<userid_t, int>> rows;
     rows.reserve(s.scores.size());
     for (const auto &kv : s.scores) {
@@ -317,8 +295,7 @@ std::string guessletter::render_scoreboard(const session &s,
 }
 
 std::vector<guessletter::question>
-guessletter::build_questions(const session &s) const
-{
+guessletter::build_questions(const session &s) const {
     std::vector<question> pool;
     std::string mode = norm_key(s.range);
     if (mode != "pinyin" && mode != "english" && mode != "mixed") {
@@ -393,15 +370,13 @@ guessletter::build_questions(const session &s) const
     return out;
 }
 
-void guessletter::advance_turn(session &s)
-{
+void guessletter::advance_turn(session &s) {
     if (!s.players.empty()) {
         s.round_idx = (s.round_idx + 1) % (int)s.players.size();
     }
 }
 
-bool guessletter::all_solved(const session &s) const
-{
+bool guessletter::all_solved(const session &s) const {
     for (const auto &q : s.questions) {
         if (!q.solved) {
             return false;
@@ -410,27 +385,23 @@ bool guessletter::all_solved(const session &s) const
     return true;
 }
 
-bool guessletter::check(std::string message, const msg_meta &conf)
-{
+bool guessletter::check(std::string message, const msg_meta &conf) {
     (void)conf;
     return cmd_match_prefix(trim(message), {"*kai", "*ba", "*开字母"});
 }
 
-std::string guessletter::help()
-{
+std::string guessletter::help() {
     return "蔚蓝开字母：轮流开字母并抢答地图名。帮助：*kai.help";
 }
 
-bool guessletter::reload(const msg_meta &conf)
-{
+bool guessletter::reload(const msg_meta &conf) {
     (void)conf;
     std::lock_guard<std::mutex> guard(lock_);
     sessions_.clear();
     return load_bank();
 }
 
-void guessletter::process(std::string message, const msg_meta &conf)
-{
+void guessletter::process(std::string message, const msg_meta &conf) {
     if (conf.message_type != "group") {
         return;
     }
@@ -547,14 +518,11 @@ void guessletter::process(std::string message, const msg_meta &conf)
         }
         if (r == "拼音") {
             r = "pinyin";
-        }
-        else if (r == "英文") {
+        } else if (r == "英文") {
             r = "english";
-        }
-        else if (r == "混合") {
+        } else if (r == "混合") {
             r = "mixed";
-        }
-        else {
+        } else {
             r = to_lower_ascii(r);
         }
         if (r != "pinyin" && r != "english" && r != "mixed") {
@@ -645,8 +613,7 @@ void guessletter::process(std::string message, const msg_meta &conf)
     if (lower_cmd == "status" || cmd == "状态") {
         if (!s.started) {
             conf.p->cq_send("当前未开始。\n" + render_board(s, conf), conf);
-        }
-        else {
+        } else {
             conf.p->cq_send(render_board(s, conf), conf);
         }
         return;
@@ -708,8 +675,7 @@ void guessletter::process(std::string message, const msg_meta &conf)
                                 conf);
                 return;
             }
-        }
-        else {
+        } else {
             const auto now = std::chrono::steady_clock::now();
             auto it = s.last_open_at.find(conf.user_id);
             if (it != s.last_open_at.end()) {
@@ -811,8 +777,7 @@ void guessletter::process(std::string message, const msg_meta &conf)
                 conf.p->cq_send("全部题目已猜完，游戏结束。", conf);
                 return;
             }
-        }
-        else {
+        } else {
             react_or_reply(conf, "424", "回答错误。");
         }
         conf.p->cq_send(render_board(s, conf), conf);

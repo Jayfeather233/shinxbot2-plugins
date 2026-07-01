@@ -3,8 +3,7 @@
 
 #include <iostream>
 
-void httpcats::process(std::string message, const msg_meta &conf)
-{
+void httpcats::process(std::string message, const msg_meta &conf) {
     Json::Value J;
     J["message_id"] = conf.message_id;
     conf.p->cq_send("mark_msg_as_read", J);
@@ -17,13 +16,11 @@ void httpcats::process(std::string message, const msg_meta &conf)
                         std::to_string(code) + ".jpg,id=40000]",
                     conf);
 }
-bool httpcats::check(std::string message, const msg_meta &conf)
-{
+bool httpcats::check(std::string message, const msg_meta &conf) {
     (void)conf;
     return cmd_match_prefix(message, {"httpcat"});
 }
-std::string httpcats::help()
-{
+std::string httpcats::help() {
     return "Http status code with cats. httpcats 404";
 }
 

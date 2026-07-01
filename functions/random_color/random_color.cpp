@@ -9,16 +9,14 @@
 
 std::string int_to_hex = "0123456789ABCDEF";
 
-r_color::r_color()
-{
+r_color::r_color() {
     const std::string color_dir = bot_resource_path(nullptr, "r_color");
     if (!fs::exists(color_dir)) {
         fs::create_directories(color_dir);
     }
 }
 
-std::string get_code(int color)
-{
+std::string get_code(int color) {
     std::string res = "#";
     for (int i = 1048576; i >= 1; i /= 16) {
         res += int_to_hex[color / i % 16];
@@ -26,8 +24,7 @@ std::string get_code(int color)
     return res;
 }
 
-void r_color::process(std::string message, const msg_meta &conf)
-{
+void r_color::process(std::string message, const msg_meta &conf) {
     Json::Value J;
     J["message_id"] = conf.message_id;
     conf.p->cq_send("mark_msg_as_read", J);
@@ -38,17 +35,14 @@ void r_color::process(std::string message, const msg_meta &conf)
             if (w_mess[i] > L'9' || L'0' > w_mess[i]) {
                 if (w_mess[i] > L'Z' || L'A' > w_mess[i]) {
                     color = (color << 4) + w_mess[i] + 10 - L'a';
-                }
-                else {
+                } else {
                     color = (color << 4) + w_mess[i] + 10 - L'A';
                 }
-            }
-            else {
+            } else {
                 color = (color << 4) + w_mess[i] - L'0';
             }
         }
-    }
-    else {
+    } else {
         color =
             get_random(256) * 65536 + get_random(256) * 256 + get_random(256);
     }
@@ -80,8 +74,7 @@ void r_color::process(std::string message, const msg_meta &conf)
         // Save the image
         image.write(
             bot_resource_path(nullptr, "r_color/" + name.substr(1) + ".png"));
-    }
-    catch (std::exception &error) {
+    } catch (std::exception &error) {
         conf.p->setlog(LOG::ERROR, error.what());
     }
 
@@ -96,8 +89,7 @@ void r_color::process(std::string message, const msg_meta &conf)
     conf.p->setlog(LOG::INFO, fmt::format("r_color at group {} by {}",
                                           conf.group_id, conf.user_id));
 }
-bool r_color::check(std::string message, const msg_meta &conf)
-{
+bool r_color::check(std::string message, const msg_meta &conf) {
     (void)conf;
     return starts_with(string_to_wstring(message), std::wstring(L"来点色图"));
 }

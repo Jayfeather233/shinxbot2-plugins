@@ -17,8 +17,7 @@ struct crop_region {
     int height = 0;
 };
 
-static crop_region get_center_16_9_region(int w, int h)
-{
+static crop_region get_center_16_9_region(int w, int h) {
     crop_region r;
     if (w <= 0 || h <= 0) {
         return r;
@@ -32,8 +31,7 @@ static crop_region get_center_16_9_region(int w, int h)
         r.width = static_cast<int>(std::round(h * target));
         r.left = (w - r.width) / 2;
         r.top = 0;
-    }
-    else {
+    } else {
         r.width = w;
         r.height = static_cast<int>(std::round(w / target));
         r.left = 0;
@@ -47,8 +45,7 @@ static crop_region get_center_16_9_region(int w, int h)
     return r;
 }
 
-static bool is_image_file(const fs::path &p)
-{
+static bool is_image_file(const fs::path &p) {
     std::string ext = p.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) {
         return static_cast<char>(std::tolower(c));
@@ -57,16 +54,14 @@ static bool is_image_file(const fs::path &p)
 }
 
 static void erase_first_path(std::vector<std::string> &paths,
-                             const std::string &target)
-{
+                             const std::string &target) {
     auto it = std::find(paths.begin(), paths.end(), target);
     if (it != paths.end()) {
         paths.erase(it);
     }
 }
 
-static std::string guessmap_detail_help()
-{
+static std::string guessmap_detail_help() {
     return "蔚蓝猜地图\n"
            "*guess.help: 查看本帮助\n"
            "*guess_start_easy/hard/ultra/imp: 开始猜图\n"
@@ -81,8 +76,7 @@ static std::string guessmap_detail_help()
 }
 
 static std::pair<std::string, std::string>
-parse_collection_and_hall(const std::string &file_path)
-{
+parse_collection_and_hall(const std::string &file_path) {
     std::string normalized = file_path;
     std::replace(normalized.begin(), normalized.end(), '\\', '/');
 
@@ -103,8 +97,7 @@ parse_collection_and_hall(const std::string &file_path)
     return {collection, hall};
 }
 
-guessmap::guessmap()
-{
+guessmap::guessmap() {
     fs::create_directories(cache_root_dir());
     load_cooldown_config();
     if (!load_maps()) {
@@ -113,28 +106,23 @@ guessmap::guessmap()
     }
 }
 
-std::string guessmap::maps_config_path() const
-{
+std::string guessmap::maps_config_path() const {
     return (fs::path(config_dir_) / "features/guessmap/maps.json").string();
 }
 
-std::string guessmap::images_root_dir() const
-{
+std::string guessmap::images_root_dir() const {
     return (fs::path(resource_dir_) / "guessmap/images").string();
 }
 
-std::string guessmap::cache_root_dir() const
-{
+std::string guessmap::cache_root_dir() const {
     return (fs::path(resource_dir_) / "guessmap").string();
 }
 
-std::string guessmap::cooldown_config_path() const
-{
+std::string guessmap::cooldown_config_path() const {
     return (fs::path(config_dir_) / "features/guessmap/cooldown.json").string();
 }
 
-void guessmap::sync_dirs_from_bot(const bot *p)
-{
+void guessmap::sync_dirs_from_bot(const bot *p) {
     if (p == nullptr) {
         return;
     }
@@ -149,8 +137,7 @@ void guessmap::sync_dirs_from_bot(const bot *p)
     load_cooldown_config();
 }
 
-void guessmap::load_cooldown_config()
-{
+void guessmap::load_cooldown_config() {
     assist_cooldown_guess_by_scope_.clear();
     Json::Value root = string_to_json(readfile(cooldown_config_path(), "{}"));
     if (!root.isObject()) {
@@ -174,8 +161,7 @@ void guessmap::load_cooldown_config()
     }
 }
 
-void guessmap::save_cooldown_config() const
-{
+void guessmap::save_cooldown_config() const {
     Json::Value root(Json::objectValue);
     auto it_default = assist_cooldown_guess_by_scope_.find("__default__");
     root["default_guess_cooldown"] =
@@ -194,8 +180,7 @@ void guessmap::save_cooldown_config() const
     writefile(cooldown_config_path(), root.toStyledString(), false);
 }
 
-int guessmap::get_assist_cooldown_guess(const std::string &id) const
-{
+int guessmap::get_assist_cooldown_guess(const std::string &id) const {
     auto it = assist_cooldown_guess_by_scope_.find(id);
     if (it != assist_cooldown_guess_by_scope_.end()) {
         return std::max(0, it->second);
@@ -208,8 +193,7 @@ int guessmap::get_assist_cooldown_guess(const std::string &id) const
 }
 
 int guessmap::available_assist_uses(const session_state &state,
-                                    int cooldown_guess) const
-{
+                                    int cooldown_guess) const {
     if (cooldown_guess <= 0) {
         return 1;
     }
@@ -218,21 +202,18 @@ int guessmap::available_assist_uses(const session_state &state,
 }
 
 bool guessmap::can_use_assist(const session_state &state,
-                              int cooldown_guess) const
-{
+                              int cooldown_guess) const {
     return available_assist_uses(state, cooldown_guess) > 0;
 }
 
-std::string guessmap::get_scope_id(const msg_meta &conf) const
-{
+std::string guessmap::get_scope_id(const msg_meta &conf) const {
     if (conf.message_type == "group") {
         return "g" + std::to_string(conf.group_id);
     }
     return "u" + std::to_string(conf.user_id);
 }
 
-std::wstring guessmap::normalize(const std::string &text) const
-{
+std::wstring guessmap::normalize(const std::string &text) const {
     std::wstring w = string_to_wstring(text);
     std::wstring out;
     out.reserve(w.size());
@@ -251,13 +232,11 @@ std::wstring guessmap::normalize(const std::string &text) const
     return out;
 }
 
-bool guessmap::is_start_cmd(const std::string &message) const
-{
+bool guessmap::is_start_cmd(const std::string &message) const {
     return cmd_match_prefix(message, {"*guess_start"});
 }
 
-int guessmap::get_start_crop(const std::string &message) const
-{
+int guessmap::get_start_crop(const std::string &message) const {
     if (cmd_match_prefix(message, {"*guess_start_hard"})) {
         return kHardCrop;
     }
@@ -285,8 +264,7 @@ int guessmap::get_start_crop(const std::string &message) const
     return kEasyCrop;
 }
 
-std::string guessmap::get_guess_arg(const std::string &message) const
-{
+std::string guessmap::get_guess_arg(const std::string &message) const {
     std::string arg;
     if (!cmd_strip_prefix(message, "*guess", arg)) {
         return "";
@@ -294,8 +272,7 @@ std::string guessmap::get_guess_arg(const std::string &message) const
     return arg;
 }
 
-bool guessmap::is_cooldown_active(const std::string &id) const
-{
+bool guessmap::is_cooldown_active(const std::string &id) const {
     auto it = cooldown_.find(id);
     if (it == cooldown_.end()) {
         return false;
@@ -303,8 +280,7 @@ bool guessmap::is_cooldown_active(const std::string &id) const
     return std::chrono::steady_clock::now() < it->second;
 }
 
-size_t guessmap::pick_map_index(const std::string &id) const
-{
+size_t guessmap::pick_map_index(const std::string &id) const {
     std::vector<size_t> all_candidates;
     all_candidates.reserve(maps_.size());
 
@@ -335,8 +311,7 @@ size_t guessmap::pick_map_index(const std::string &id) const
     return pool[static_cast<size_t>(get_random(static_cast<int>(pool.size())))];
 }
 
-void guessmap::record_recent_map(const std::string &id, size_t map_index)
-{
+void guessmap::record_recent_map(const std::string &id, size_t map_index) {
     std::deque<size_t> &history = recent_map_history_[id];
     history.erase(std::remove(history.begin(), history.end(), map_index),
                   history.end());
@@ -346,8 +321,7 @@ void guessmap::record_recent_map(const std::string &id, size_t map_index)
     }
 }
 
-bool guessmap::load_maps()
-{
+bool guessmap::load_maps() {
     std::string maps_json = maps_config_path();
     std::string images_root = images_root_dir();
 
@@ -401,8 +375,7 @@ bool guessmap::load_maps()
     return !maps_.empty();
 }
 
-bool guessmap::is_nonsense(const Magick::Image &img) const
-{
+bool guessmap::is_nonsense(const Magick::Image &img) const {
     const size_t w = img.columns();
     const size_t h = img.rows();
     if (w == 0 || h == 0) {
@@ -435,49 +408,43 @@ bool guessmap::is_nonsense(const Magick::Image &img) const
     return rv + gv + bv < 300.0;
 }
 
-std::string guessmap::cropped_output_path(const std::string &id) const
-{
+std::string guessmap::cropped_output_path(const std::string &id) const {
     fs::path p = fs::path(cache_root_dir()) / (id + "_crop.png");
     return fs::absolute(p).string();
 }
 
-std::string guessmap::reveal_output_path(const std::string &id) const
-{
+std::string guessmap::reveal_output_path(const std::string &id) const {
     fs::path p = fs::path(cache_root_dir()) / (id + "_reveal.png");
     return fs::absolute(p).string();
 }
 
-std::string guessmap::hint_output_path(const std::string &id, int seq) const
-{
+std::string guessmap::hint_output_path(const std::string &id, int seq) const {
     fs::path p = fs::path(cache_root_dir()) /
                  (id + "_hint_" + std::to_string(seq) + ".png");
     return fs::absolute(p).string();
 }
 
 bool guessmap::write_hint_crop(const session_state &state, int left, int top,
-                               int crop_size, const std::string &out_file) const
-{
+                               int crop_size,
+                               const std::string &out_file) const {
     Magick::Image img;
     try {
         img.read(state.source_image);
         img.crop(Magick::Geometry(crop_size, crop_size, left, top));
         img.page(Magick::Geometry(0, 0, 0, 0));
         img.write(out_file);
-    }
-    catch (...) {
+    } catch (...) {
         return false;
     }
     return true;
 }
 
 bool guessmap::try_random_position(const session_state &state, int crop_size,
-                                   int &left, int &top) const
-{
+                                   int &left, int &top) const {
     Magick::Image img;
     try {
         img.read(state.source_image);
-    }
-    catch (...) {
+    } catch (...) {
         return false;
     }
 
@@ -513,8 +480,7 @@ bool guessmap::try_random_position(const session_state &state, int crop_size,
 }
 
 bool guessmap::append_hint_image(session_state &state,
-                                 const std::string &id) const
-{
+                                 const std::string &id) const {
     const std::string out = hint_output_path(id, state.image_seq++);
     if (!write_hint_crop(state, state.left, state.top, state.crop_size, out)) {
         return false;
@@ -525,8 +491,7 @@ bool guessmap::append_hint_image(session_state &state,
 }
 
 bool guessmap::roll_hint(session_state &state, const std::string &id,
-                         bool ignore_usage_cap)
-{
+                         bool ignore_usage_cap) {
     if (!ignore_usage_cap && state.roll_count >= kMaxRollCount) {
         return false;
     }
@@ -556,8 +521,7 @@ bool guessmap::roll_hint(session_state &state, const std::string &id,
 }
 
 bool guessmap::expand_hint(session_state &state, const std::string &id,
-                           bool ignore_usage_cap)
-{
+                           bool ignore_usage_cap) {
     if (!ignore_usage_cap && state.hint_count >= kMaxHintCount) {
         return false;
     }
@@ -565,8 +529,7 @@ bool guessmap::expand_hint(session_state &state, const std::string &id,
     Magick::Image img;
     try {
         img.read(state.source_image);
-    }
-    catch (...) {
+    } catch (...) {
         return false;
     }
 
@@ -623,16 +586,14 @@ bool guessmap::expand_hint(session_state &state, const std::string &id,
         fs::remove(old, ec);
         erase_first_path(state.temp_files, old);
         state.hint_images[state.current_track] = out;
-    }
-    else {
+    } else {
         state.hint_images.push_back(out);
     }
     state.temp_files.push_back(out);
     return true;
 }
 
-bool guessmap::start_game(const std::string &id, int crop_size)
-{
+bool guessmap::start_game(const std::string &id, int crop_size) {
     if (maps_.empty()) {
         load_maps();
     }
@@ -656,8 +617,7 @@ bool guessmap::start_game(const std::string &id, int crop_size)
         Magick::Image img;
         try {
             img.read(img_file);
-        }
-        catch (...) {
+        } catch (...) {
             continue;
         }
 
@@ -732,13 +692,11 @@ bool guessmap::start_game(const std::string &id, int crop_size)
 }
 
 bool guessmap::build_reveal_image(const session_state &state,
-                                  const std::string &out_file) const
-{
+                                  const std::string &out_file) const {
     Magick::Image img;
     try {
         img.read(state.source_image);
-    }
-    catch (...) {
+    } catch (...) {
         return false;
     }
 
@@ -753,8 +711,7 @@ bool guessmap::build_reveal_image(const session_state &state,
         img.crop(Magick::Geometry(playable.width, playable.height,
                                   playable.left, playable.top));
         img.page(Magick::Geometry(0, 0, 0, 0));
-    }
-    catch (...) {
+    } catch (...) {
         return false;
     }
 
@@ -818,15 +775,13 @@ bool guessmap::build_reveal_image(const session_state &state,
 
     try {
         img.write(out_file);
-    }
-    catch (...) {
+    } catch (...) {
         return false;
     }
     return true;
 }
 
-void guessmap::cleanup_generated_images(const std::string &id) const
-{
+void guessmap::cleanup_generated_images(const std::string &id) const {
     auto it = sessions_.find(id);
     if (it != sessions_.end()) {
         std::error_code ec;
@@ -844,8 +799,7 @@ void guessmap::cleanup_generated_images(const std::string &id) const
 
 void guessmap::send_all_hint_images(const msg_meta &conf,
                                     const session_state &state,
-                                    const std::string &text) const
-{
+                                    const std::string &text) const {
     std::string msg = text;
     bool first = true;
     for (const auto &f : state.hint_images) {
@@ -859,8 +813,7 @@ void guessmap::send_all_hint_images(const msg_meta &conf,
 }
 
 void guessmap::react_or_reply(const msg_meta &conf, const std::string &emoji_id,
-                              const std::string &fallback_text) const
-{
+                              const std::string &fallback_text) const {
     bool ok = false;
     try {
         Json::Value J;
@@ -869,8 +822,7 @@ void guessmap::react_or_reply(const msg_meta &conf, const std::string &emoji_id,
         Json::Value R =
             string_to_json(conf.p->cq_send("set_msg_emoji_like", J));
         ok = R["status"].asString() == "ok";
-    }
-    catch (...) {
+    } catch (...) {
     }
 
     if (!ok && !fallback_text.empty()) {
@@ -881,8 +833,7 @@ void guessmap::react_or_reply(const msg_meta &conf, const std::string &emoji_id,
 }
 
 void guessmap::send_guess_prompt(const msg_meta &conf,
-                                 const std::string &crop_file) const
-{
+                                 const std::string &crop_file) const {
     conf.p->cq_send(
         "[CQ:image,file=file://" + crop_file +
             ",id=40000]这个截图是出自哪张图呢？\n输入*guess 你的答案 以回答",
@@ -891,20 +842,17 @@ void guessmap::send_guess_prompt(const msg_meta &conf,
 
 void guessmap::send_finish_message(const msg_meta &conf,
                                    const std::string &text,
-                                   const std::string &image_file) const
-{
+                                   const std::string &image_file) const {
     conf.p->cq_send(text + "[CQ:image,file=file://" + image_file + ",id=40000]",
                     conf);
 }
 
-bool guessmap::check(std::string message, const msg_meta &conf)
-{
+bool guessmap::check(std::string message, const msg_meta &conf) {
     (void)conf;
     return cmd_match_prefix(trim(message), {"*guess"});
 }
 
-bool guessmap::reload(const msg_meta &conf)
-{
+bool guessmap::reload(const msg_meta &conf) {
     std::lock_guard<std::mutex> guard(lock_);
     sync_dirs_from_bot(conf.p);
     sessions_.clear();
@@ -914,8 +862,7 @@ bool guessmap::reload(const msg_meta &conf)
     return load_maps();
 }
 
-void guessmap::process(std::string message, const msg_meta &conf)
-{
+void guessmap::process(std::string message, const msg_meta &conf) {
     message = trim(message);
     const std::string id = get_scope_id(conf);
 
@@ -927,8 +874,7 @@ void guessmap::process(std::string message, const msg_meta &conf)
         if (cd <= 0) {
             conf.p->cq_send("当前提示冷却: 0（roll/hint 不受猜测次数限制）",
                             conf);
-        }
-        else {
+        } else {
             conf.p->cq_send("当前提示冷却: 每猜 " + std::to_string(cd) +
                                 " 次可使用 1 次 roll/hint（二选一）",
                             conf);
@@ -1089,8 +1035,7 @@ void guessmap::process(std::string message, const msg_meta &conf)
                                 "你放弃了！答案是：" +
                                     maps_[state.map_index].answer + "。",
                                 out);
-        }
-        else {
+        } else {
             conf.p->cq_send("你放弃了！答案是：" +
                                 maps_[state.map_index].answer + "。",
                             conf);
@@ -1138,15 +1083,13 @@ void guessmap::process(std::string message, const msg_meta &conf)
         const bool should_alien_react = is_first_guess_of_user || solved_fast;
         if (should_alien_react) {
             react_or_reply(conf, "128125", "外星人啊");
-        }
-        else {
+        } else {
             react_or_reply(conf, "9989", "");
         }
         if (build_reveal_image(state, out)) {
             send_finish_message(
                 conf, "你猜对了！答案是：" + entry.answer + "。", out);
-        }
-        else {
+        } else {
             conf.p->cq_send("你猜对了！答案是：" + entry.answer + "。", conf);
         }
         cleanup_generated_images(id);
@@ -1178,13 +1121,12 @@ void guessmap::process(std::string message, const msg_meta &conf)
     react_or_reply(conf, "10068", "?");
 }
 
-void guessmap::set_backup_files(archivist *p, const std::string &name)
-{
-    p->add_path(name, bot_resource_path(nullptr, "guessmap/images/"), "resource/guessmap/images/");
+void guessmap::set_backup_files(archivist *p, const std::string &name) {
+    p->add_path(name, bot_resource_path(nullptr, "guessmap/images/"),
+                "resource/guessmap/images/");
 }
 
-std::string guessmap::help()
-{
+std::string guessmap::help() {
     return "蔚蓝猜地图：根据截图猜地图。帮助：*guess.help";
 }
 

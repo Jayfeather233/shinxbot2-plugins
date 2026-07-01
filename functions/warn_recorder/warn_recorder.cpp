@@ -3,8 +3,7 @@
 
 #include <iostream>
 
-void warn_recorder::process_command(std::string command, const msg_meta &conf)
-{
+void warn_recorder::process_command(std::string command, const msg_meta &conf) {
     command = trim(command);
     std::istringstream iss(command);
     std::string subcmd;
@@ -53,8 +52,7 @@ void warn_recorder::process_command(std::string command, const msg_meta &conf)
              size_t index;
              try {
                  index = std::stoul(payload.substr(space_pos + 1)) - 1;
-             }
-             catch (...) {
+             } catch (...) {
                  conf.p->cq_send("参数错误。请使用 /warn.del [qq] [index] 格式",
                                  conf);
                  return true;
@@ -76,8 +74,7 @@ void warn_recorder::process_command(std::string command, const msg_meta &conf)
 }
 
 // output 已警告 <user> %s 次\n理由: 1. xxx\n2. xxx
-void warn_recorder::process(std::string message, const msg_meta &conf)
-{
+void warn_recorder::process(std::string message, const msg_meta &conf) {
     if (message.size() < 5) {
         conf.p->cq_send("参数错误。请使用 /warn [qq] [msg] 格式", conf);
         return;
@@ -96,8 +93,7 @@ void warn_recorder::process(std::string message, const msg_meta &conf)
         if (message[0] != '[') {
             conf.p->cq_send("参数错误。请使用 /warn [qq] [msg] 格式", conf);
             return;
-        }
-        else {
+        } else {
             space_pos = message.find(']');
         }
     }
@@ -119,8 +115,7 @@ void warn_recorder::process(std::string message, const msg_meta &conf)
     }
     conf.p->cq_send(oss.str(), conf);
 }
-void warn_recorder::save()
-{
+void warn_recorder::save() {
     Json::Value J;
     for (const auto &group_pair : warns) {
         Json::Value group_val;
@@ -138,16 +133,14 @@ void warn_recorder::save()
 }
 warn_recorder::warn_recorder() { load_config(); }
 
-void warn_recorder::load_config()
-{
+void warn_recorder::load_config() {
     warns.clear();
     Json::Value J;
     try {
         J = string_to_json(readfile(
             bot_config_path(nullptr, "features/warn_recorder/warns.json"),
             "{}"));
-    }
-    catch (...) {
+    } catch (...) {
         return;
     }
     for (const auto &group_member : J.getMemberNames()) {
@@ -161,30 +154,26 @@ void warn_recorder::load_config()
                     warns[group_id][user_id].push_back(warn.asString());
                 }
             }
-        }
-        catch (...) {
+        } catch (...) {
             continue;
         }
     }
 }
 
-bool warn_recorder::reload(const msg_meta &conf)
-{
+bool warn_recorder::reload(const msg_meta &conf) {
     (void)conf;
     load_config();
     return true;
 }
 
-bool warn_recorder::check(std::string message, const msg_meta &conf)
-{
+bool warn_recorder::check(std::string message, const msg_meta &conf) {
     return cmd_match_prefix(message, {"/warn"}) &&
            is_group_op(conf.p, conf.group_id, conf.user_id);
 }
 
 std::string warn_recorder::help() { return "用户警告记录。"; }
 
-std::string warn_recorder::help(const msg_meta &conf, help_level_t level)
-{
+std::string warn_recorder::help(const msg_meta &conf, help_level_t level) {
     if (level != help_level_t::group_admin || conf.message_type != "group" ||
         !is_group_op(conf.p, conf.group_id, conf.user_id)) {
         return help();

@@ -11,8 +11,7 @@ int ans;
 
 int mapx[100][100];
 int dlc[100], dlr[100];
-void opt(int x, int y)
-{
+void opt(int x, int y) {
     // printf("%d %d\n",x,y);
     for (int i = 1; i <= r; i++) {
         for (int j = 1; j <= c; j++) {
@@ -22,8 +21,7 @@ void opt(int x, int y)
     }
     printf("\n");
 }
-void dfs(int x, int y)
-{
+void dfs(int x, int y) {
     // opt(x,y);
     if (x == r + 1) {
         opt(x, y);
@@ -39,8 +37,7 @@ void dfs(int x, int y)
     if (y == c + 1) {
         if (dlr[x] == lr[x] && row[x][lr[x]] == 0) {
             dfs(x + 1, 1);
-        }
-        else {
+        } else {
             // printf("re 2\n");
             ;
         }
@@ -86,8 +83,7 @@ void dfs(int x, int y)
         dlc[y]--;
     mapx[x][y] = 0;
 }
-int main()
-{
+int main() {
     cin >> r >> c;
     for (int i = 1; i <= r; i++) {
         scanf("%d", &lr[i]);
